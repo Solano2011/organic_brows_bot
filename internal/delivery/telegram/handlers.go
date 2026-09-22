@@ -64,7 +64,7 @@ func (h *Handlers) isAdmin(userID int64) bool {
 func (h *Handlers) handleStart(c tele.Context) error {
 	// Теперь это просто переменная с текстом (назовем ее text вместо caption)
 	text := fmt.Sprintf(
-		"Добро пожаловать, *%s*! 🌸\n\n"+
+		"Добро пожаловать, *%s*! 🌿\n\n"+
 			"Я помогу вам записаться к мастеру.\n"+
 			"Выберите действие из меню ниже:",
 		c.Sender().FirstName,

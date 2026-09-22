@@ -30,7 +30,7 @@ var (
 func BuildInlineMainMenu(webAppURL string) *tele.ReplyMarkup {
 	m := &tele.ReplyMarkup{}
 
-	btnWebApp := m.WebApp("💅 Записаться", &tele.WebApp{URL: webAppURL})
+	btnWebApp := m.WebApp("✨ Записаться", &tele.WebApp{URL: webAppURL})
 
 	m.Inline(
 		m.Row(btnWebApp),
