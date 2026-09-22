@@ -33,6 +33,7 @@ type BookingRepository interface {
 	Delete(ctx context.Context, userID int64) error
 	DeleteConfirmed(ctx context.Context, userID int64) error
 	DeleteDraft(ctx context.Context, userID int64) error
+	DeleteBookingByID(ctx context.Context, id int) error
 	GetAllActive(ctx context.Context) ([]Booking, error)
 	GetTakenTimeSlots(ctx context.Context, date string, serviceName string) ([]string, error)
 	ResetAll(ctx context.Context) error
@@ -48,6 +49,7 @@ type BookingService interface {
 	CancelBooking(ctx context.Context, userID int64) error
 	CancelConfirmedBooking(ctx context.Context, userID int64) error
 	CancelDraftBooking(ctx context.Context, userID int64) error
+	DeleteBookingByID(ctx context.Context, id int) error
 	GetAllActiveBookings(ctx context.Context) ([]Booking, error)
 	ResetAllBookings(ctx context.Context) error
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"strconv"
 	"time"
 
 	"hookah-bot/internal/domain"
@@ -214,7 +215,7 @@ func (r *BookingRepo) DeleteDraft(ctx context.Context, userID int64) error {
 
 func (r *BookingRepo) GetAllActive(ctx context.Context) ([]domain.Booking, error) {
 	rows, err := r.db.Conn.Query(ctx, `
-        SELECT user_id, service_name, time_slot, date, COALESCE(user_name, ''), COALESCE(phone, ''), COALESCE(comment, ''), created_at
+        SELECT id, user_id, service_name, time_slot, date, COALESCE(user_name, ''), COALESCE(phone, ''), COALESCE(comment, ''), created_at
         FROM bookings
         WHERE status = 'confirmed'
         ORDER BY created_at DESC`,
@@ -227,14 +228,21 @@ func (r *BookingRepo) GetAllActive(ctx context.Context) ([]domain.Booking, error
 	var result []domain.Booking
 	for rows.Next() {
 		var b domain.Booking
+		var id int
 		var dateVal time.Time
-		if err := rows.Scan(&b.UserID, &b.ServiceName, &b.TimeSlot, &dateVal, &b.UserName, &b.Phone, &b.Comment, &b.CreatedAt); err != nil {
+		if err := rows.Scan(&id, &b.UserID, &b.ServiceName, &b.TimeSlot, &dateVal, &b.UserName, &b.Phone, &b.Comment, &b.CreatedAt); err != nil {
 			return nil, err
 		}
+		b.ID = strconv.Itoa(id)
 		b.Date = dateVal.Format("02.01.2006")
 		result = append(result, b)
 	}
 	return result, nil
+}
+
+func (r *BookingRepo) DeleteBookingByID(ctx context.Context, id int) error {
+	_, err := r.db.Conn.Exec(ctx, `DELETE FROM bookings WHERE id = $1`, id)
+	return err
 }
 
 func (r *BookingRepo) ResetAll(ctx context.Context) error {

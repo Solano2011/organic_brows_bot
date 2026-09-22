@@ -1,14 +1,20 @@
 package telegram
 
-import tele "gopkg.in/telebot.v3"
+import (
+	"fmt"
+
+	"hookah-bot/internal/domain"
+
+	tele "gopkg.in/telebot.v3"
+)
 
 var (
 	Menu = &tele.ReplyMarkup{}
 
 	// Главное меню (Inline-кнопки под сообщением)
-	BtnMyBooking     = Menu.Data("📅 Моя запись", "btn_my_booking")
-	BtnMyBookings    = Menu.Data("📅 Моя бронь", "my_bookings")
-	BtnContacts      = Menu.Data("📍 Контакты", "btn_contacts")
+	BtnMyBooking  = Menu.Data("📅 Моя запись", "btn_my_booking")
+	BtnMyBookings = Menu.Data("📅 Моя бронь", "my_bookings")
+	BtnContacts   = Menu.Data("📍 Контакты", "btn_contacts")
 
 	// Навигация
 	BtnBackToMain    = Menu.Data("◀️ Назад в меню", "btn_back_main")
@@ -116,11 +122,17 @@ func BuildReplaceConfirmMenu() *tele.ReplyMarkup {
 	return m
 }
 
-func BuildAdminMenu() *tele.ReplyMarkup {
+func BuildAdminMenu(bookings []domain.Booking) *tele.ReplyMarkup {
 	m := &tele.ReplyMarkup{}
-	m.Inline(
-		m.Row(BtnAdminRefresh),
-		m.Row(BtnAdminResetAll),
-	)
+	rows := make([]tele.Row, 0, len(bookings)+2)
+	for _, b := range bookings {
+		btn := tele.Btn{
+			Text: fmt.Sprintf("❌ Удалить #%s", b.ID),
+			Data: fmt.Sprintf("del_book:%s", b.ID),
+		}
+		rows = append(rows, m.Row(btn))
+	}
+	rows = append(rows, m.Row(BtnAdminRefresh), m.Row(BtnAdminResetAll))
+	m.Inline(rows...)
 	return m
 }

@@ -49,6 +49,10 @@ func (s *BookingSvc) CancelDraftBooking(ctx context.Context, userID int64) error
 	return s.repo.DeleteDraft(ctx, userID)
 }
 
+func (s *BookingSvc) DeleteBookingByID(ctx context.Context, id int) error {
+	return s.repo.DeleteBookingByID(ctx, id)
+}
+
 func (s *BookingSvc) GetAllActiveBookings(ctx context.Context) ([]domain.Booking, error) {
 	return s.repo.GetAllActive(ctx)
 }

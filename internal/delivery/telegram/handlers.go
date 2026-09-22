@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 
 	"hookah-bot/internal/domain"
@@ -55,6 +56,7 @@ func (h *Handlers) InitRoutes(b *tele.Bot) {
 
 	b.Handle(&BtnAdminRefresh, h.handleAdminRefresh)
 	b.Handle(&BtnAdminResetAll, h.handleAdminResetAll)
+	b.Handle(tele.OnCallback, h.handleCallback)
 }
 
 func (h *Handlers) isAdmin(userID int64) bool {
@@ -306,13 +308,13 @@ func (h *Handlers) handleContactsBtn(c tele.Context) error {
 	return c.Send(text, BuildContactsMenu(), tele.ModeMarkdown)
 }
 
-func (h *Handlers) renderAdminDashboard(ctx context.Context) (string, error) {
+func (h *Handlers) renderAdminDashboard(ctx context.Context) (string, []domain.Booking, error) {
 	bookings, err := h.bookingService.GetAllActiveBookings(ctx)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	if len(bookings) == 0 {
-		return "🛠 *Панель администратора*\n\nНа сегодня активных записей нет.", nil
+		return "🛠 *Панель администратора*\n\nНа сегодня активных записей нет.", bookings, nil
 	}
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "🛠 *Панель администратора*\nВсего активных записей: *%d*\n━━━━━━━━━━━━━━━\n", len(bookings))
@@ -320,24 +322,24 @@ func (h *Handlers) renderAdminDashboard(ctx context.Context) (string, error) {
 		fmt.Fprintf(&sb, "*%d.* 💅 `%s` | 📅 `%s` | ⏰ `%s`\n   👤 %s | 📞 %s\n   💬 %s\n   🆔 Гость: `%d`\n\n",
 			i+1, b.ServiceName, b.Date, b.TimeSlot, b.UserName, b.Phone, b.Comment, b.UserID)
 	}
-	return sb.String(), nil
+	return sb.String(), bookings, nil
 }
 
 func (h *Handlers) handleAdmin(c tele.Context) error {
 	if !h.isAdmin(c.Sender().ID) {
 		return c.Send("❌ У вас нет прав администратора.")
 	}
-	text, _ := h.renderAdminDashboard(context.Background())
-	return c.Send(text, BuildAdminMenu(), tele.ModeMarkdown)
+	text, bookings, _ := h.renderAdminDashboard(context.Background())
+	return c.Send(text, BuildAdminMenu(bookings), tele.ModeMarkdown)
 }
 
 func (h *Handlers) handleAdminRefresh(c tele.Context) error {
 	if !h.isAdmin(c.Sender().ID) {
 		return c.Respond(&tele.CallbackResponse{Text: "Доступ запрещен", ShowAlert: true})
 	}
-	text, _ := h.renderAdminDashboard(context.Background())
+	text, bookings, _ := h.renderAdminDashboard(context.Background())
 	_ = c.Delete()
-	return c.Send(text, BuildAdminMenu(), tele.ModeMarkdown)
+	return c.Send(text, BuildAdminMenu(bookings), tele.ModeMarkdown)
 }
 
 func (h *Handlers) handleAdminResetAll(c tele.Context) error {
@@ -347,7 +349,38 @@ func (h *Handlers) handleAdminResetAll(c tele.Context) error {
 	ctx := context.Background()
 	_ = h.bookingService.ResetAllBookings(ctx)
 	_ = c.Delete()
-	return c.Send("✅ *Все записи успешно отменены.*", BuildAdminMenu(), tele.ModeMarkdown)
+	return c.Send("✅ *Все записи успешно отменены.*", BuildAdminMenu(nil), tele.ModeMarkdown)
+}
+
+func (h *Handlers) handleCallback(c tele.Context) error {
+	data := c.Data()
+	if strings.HasPrefix(data, "del_book:") {
+		return h.handleDeleteBooking(c)
+	}
+	return nil
+}
+
+func (h *Handlers) handleDeleteBooking(c tele.Context) error {
+	if !h.isAdmin(c.Sender().ID) {
+		return c.Respond(&tele.CallbackResponse{Text: "Доступ запрещен", ShowAlert: true})
+	}
+
+	idStr := strings.TrimPrefix(c.Data(), "del_book:")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return c.Respond(&tele.CallbackResponse{Text: "Некорректный ID", ShowAlert: true})
+	}
+
+	ctx := context.Background()
+	if err := h.bookingService.DeleteBookingByID(ctx, id); err != nil {
+		log.Printf("❌ Ошибка удаления записи id=%d: %v", id, err)
+		return c.Respond(&tele.CallbackResponse{Text: "Ошибка удаления", ShowAlert: true})
+	}
+
+	text, bookings, _ := h.renderAdminDashboard(ctx)
+	_ = c.Edit(text, tele.ModeMarkdown)
+	_, _ = h.bot.EditReplyMarkup(c.Callback(), BuildAdminMenu(bookings))
+	return c.Respond(&tele.CallbackResponse{Text: fmt.Sprintf("Запись #%d удалена", id)})
 }
 
 // --- ОБРАБОТКА ЗАМЕНЫ ЗАПИСИ ---

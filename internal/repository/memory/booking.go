@@ -2,6 +2,7 @@ package memory
 
 import (
 	"context"
+	"strconv"
 	"sync"
 
 	"hookah-bot/internal/domain"
@@ -126,6 +127,19 @@ func (r *BookingRepo) DeleteDraft(ctx context.Context, userID int64) error {
 
 	if b, exists := r.drafts[userID]; exists && b.TimeSlot == "" {
 		delete(r.drafts, userID)
+	}
+	return nil
+}
+
+func (r *BookingRepo) DeleteBookingByID(ctx context.Context, id int) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for userID, b := range r.drafts {
+		if b.ID == strconv.Itoa(id) {
+			delete(r.drafts, userID)
+			return nil
+		}
 	}
 	return nil
 }

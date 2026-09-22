@@ -87,6 +87,10 @@ func (m *mockBookingRepo) DeleteDraft(ctx context.Context, userID int64) error {
 	return nil
 }
 
+func (m *mockBookingRepo) DeleteBookingByID(ctx context.Context, id int) error {
+	return nil
+}
+
 func (m *mockBookingRepo) GetAllActive(ctx context.Context) ([]domain.Booking, error) {
 	if m.getAllActiveFunc != nil {
 		return m.getAllActiveFunc(ctx)
