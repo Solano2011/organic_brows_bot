@@ -63,6 +63,21 @@ body {
     gap: 12px;
 }
 
+/* --- ЗАГОЛОВКИ КАТЕГОРИЙ --- */
+.category-header {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-top: 24px;
+    margin-bottom: 12px;
+    padding-left: 4px;
+    letter-spacing: -0.3px;
+}
+
+.category-header:first-child {
+    margin-top: 0;
+}
+
 .service-card {
     background-color: var(--card-bg);
     border-radius: 20px;

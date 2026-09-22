@@ -20,35 +20,122 @@
 
             <!-- Список карточек -->
             <div class="services-list" id="services-container">
-                <div class="service-card" onclick="selectServiceFromMenu('Маникюр')">
-                    <img src="/static/img/Manic.jpg" alt="Маникюр" class="service-image">
+                <!-- Категория: Organic brow -->
+                <div class="category-header">Organic brow</div>
+
+                <div class="service-card" onclick="selectServiceFromMenu('Organic brow 🍈 + коррекция')">
+                    <img src="/static/img/organic_brow.jpg" alt="Organic brow" class="service-image">
                     <div class="service-info">
-                        <div class="service-name">Маникюр</div>
-                        <div class="service-price">от 1500 ₽</div>
+                        <div class="service-name">Organic brow 🍈 + коррекция</div>
+                        <div class="service-price">1500 ₽ · 60 мин</div>
                     </div>
                 </div>
 
-                <div class="service-card" onclick="selectServiceFromMenu('Педикюр')">
-                    <img src="/static/img/Pedic.jpg" alt="Педикюр" class="service-image">
+                <div class="service-card" onclick="selectServiceFromMenu('Organic brow 🍈 + натуральное оформление бровей')">
+                    <img src="/static/img/organic_brow_styling.jpg" alt="Organic brow + оформление" class="service-image">
                     <div class="service-info">
-                        <div class="service-name">Педикюр</div>
-                        <div class="service-price">от 2000 ₽</div>
+                        <div class="service-name">Organic brow 🍈 + натуральное оформление</div>
+                        <div class="service-price">2000 ₽ · 90 мин</div>
                     </div>
                 </div>
 
-                <div class="service-card" onclick="selectServiceFromMenu('Покрытие гель-лак')">
-                    <img src="/static/img/GelLak.jpg" alt="Гель-лак" class="service-image">
+                <!-- Категория: брови -->
+                <div class="category-header">Брови</div>
+
+                <div class="service-card" onclick="selectServiceFromMenu('Коррекция бровей')">
+                    <img src="/static/img/brow_correction.jpg" alt="Коррекция бровей" class="service-image">
                     <div class="service-info">
-                        <div class="service-name">Покрытие гель-лак</div>
-                        <div class="service-price">от 800 ₽</div>
+                        <div class="service-name">Коррекция бровей</div>
+                        <div class="service-price">1000 ₽ · 60 мин</div>
                     </div>
                 </div>
 
-                <div class="service-card" onclick="selectServiceFromMenu('Наращивание ногтей')">
-                    <img src="/static/img/Narashivanie.jpg" alt="Наращивание ногтей" class="service-image">
+                <div class="service-card" onclick="selectServiceFromMenu('Ламинирование бровей')">
+                    <img src="/static/img/brow_lamination.jpg" alt="Ламинирование бровей" class="service-image">
                     <div class="service-info">
-                        <div class="service-name">Наращивание ногтей</div>
-                        <div class="service-price">от 2500 ₽</div>
+                        <div class="service-name">Ламинирование бровей</div>
+                        <div class="service-price">1600 ₽ · 60 мин</div>
+                    </div>
+                </div>
+
+                <div class="service-card" onclick="selectServiceFromMenu('Натуральное оформление бровей 🐚')">
+                    <img src="/static/img/brow_styling.jpg" alt="Оформление бровей" class="service-image">
+                    <div class="service-info">
+                        <div class="service-name">Натуральное оформление бровей 🐚</div>
+                        <div class="service-price">1600 ₽ · 60 мин</div>
+                    </div>
+                </div>
+
+                <div class="service-card" onclick="selectServiceFromMenu('Осветление бровей')">
+                    <img src="/static/img/brow_bleaching.jpg" alt="Осветление бровей" class="service-image">
+                    <div class="service-info">
+                        <div class="service-name">Осветление бровей</div>
+                        <div class="service-price">1800 ₽ · 80 мин</div>
+                    </div>
+                </div>
+
+                <div class="service-card" onclick="selectServiceFromMenu('Полный комплекс ламинирования бровей')">
+                    <img src="/static/img/brow_full_complex.jpg" alt="Полный комплекс" class="service-image">
+                    <div class="service-info">
+                        <div class="service-name">Полный комплекс ламинирования бровей</div>
+                        <div class="service-price">2000 ₽ · 60 мин</div>
+                    </div>
+                </div>
+
+                <!-- Категория: ресницы -->
+                <div class="category-header">Ресницы</div>
+
+                <div class="service-card" onclick="selectServiceFromMenu('Ламинирование ресниц + снятие наращенных ресниц')">
+                    <img src="/static/img/lash_lamination_removal.jpg" alt="Ламинирование + снятие" class="service-image">
+                    <div class="service-info">
+                        <div class="service-name">Ламинирование ресниц + снятие наращенных</div>
+                        <div class="service-price">2000 ₽ · 80 мин</div>
+                    </div>
+                </div>
+
+                <div class="service-card" onclick="selectServiceFromMenu('Ламинирование ресниц 🐚')">
+                    <img src="/static/img/lash_lamination.jpg" alt="Ламинирование ресниц" class="service-image">
+                    <div class="service-info">
+                        <div class="service-name">Ламинирование ресниц 🐚</div>
+                        <div class="service-price">1800 ₽ · 60 мин</div>
+                    </div>
+                </div>
+
+                <!-- Категория: Дополнительно -->
+                <div class="category-header">Дополнительно</div>
+
+                <div class="service-card" onclick="selectServiceFromMenu('Удаление пушка на губой')">
+                    <img src="/static/img/lip_hair_removal.jpg" alt="Удаление пушка" class="service-image">
+                    <div class="service-info">
+                        <div class="service-name">Удаление пушка на губой</div>
+                        <div class="service-price">300 ₽ · 10 мин</div>
+                    </div>
+                </div>
+
+                <!-- Категория: комбо -->
+                <div class="category-header">Комбо</div>
+
+                <div class="service-card" onclick="selectServiceFromMenu('Organic brow 🍈 + оформление бровей + ламинирование ресниц')">
+                    <img src="/static/img/combo_organic_lash.jpg" alt="Organic + ламинирование ресниц" class="service-image">
+                    <div class="service-info">
+                        <div class="service-name">Organic brow + оформление + ламинирование ресниц</div>
+                        <div class="service-price">3500 ₽ · 120 мин</div>
+                    </div>
+                </div>
+
+                <div class="service-card" onclick="selectServiceFromMenu('Ламинирование ресниц + ламинирование бровей')">
+                    <img src="/static/img/combo_lash_brow.jpg" alt="Ламинирование ресниц + бровей" class="service-image">
+                    <div class="service-info">
+                        <div class="service-name">Ламинирование ресниц + ламинирование бровей</div>
+                        <div class="service-price">3400 ₽ · 120 мин</div>
+                    </div>
+                </div>
+
+                <div class="service-card" onclick="selectServiceFromMenu('Ламинирование ресниц + натуральное оформление бровей 🪞')">
+                    <img src="/static/img/combo_lash_styling.jpg" alt="Ламинирование + оформление" class="service-image">
+                    <div class="service-info">
+                        <div class="service-name">Ламинирование ресниц + натуральное оформление 🪞</div>
+                        <div class="service-price">3000 ₽ · 120 мин</div>
                     </div>
                 </div>
             </div>

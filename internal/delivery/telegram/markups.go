@@ -42,15 +42,39 @@ func BuildInlineMainMenu(webAppURL string) *tele.ReplyMarkup {
 func BuildServicesMenu() *tele.ReplyMarkup {
 	m := &tele.ReplyMarkup{}
 
-	// Услуги бьюти-мастера
-	btnManicure := m.Data("💅 Маникюр", "service", "Маникюр")
-	btnPedicure := m.Data("🦶 Педикюр", "service", "Педикюр")
-	btnExtension := m.Data("💎 Наращивание ногтей", "service", "Наращивание ногтей")
-	btnGelPolish := m.Data("✨ Покрытие гель-лак", "service", "Покрытие гель-лак")
+	// Organic brow
+	btnOrganicBrow := m.Data("🍈 Organic brow", "service", "Organic brow 🍈 + коррекция")
+	btnOrganicBrowFull := m.Data("🍈 Organic + оформление", "service", "Organic brow 🍈 + натуральное оформление бровей")
+
+	// Брови
+	btnBrowCorrection := m.Data("✨ Коррекция бровей", "service", "Коррекция бровей")
+	btnBrowLamination := m.Data("💫 Ламинирование бровей", "service", "Ламинирование бровей")
+	btnBrowStyling := m.Data("🐚 Оформление бровей", "service", "Натуральное оформление бровей 🐚")
+	btnBrowBleaching := m.Data("🌟 Осветление бровей", "service", "Осветление бровей")
+	btnBrowFull := m.Data("💎 Полный комплекс бровей", "service", "Полный комплекс ламинирования бровей")
+
+	// Ресницы
+	btnLashLamination := m.Data("🐚 Ламинирование ресниц", "service", "Ламинирование ресниц 🐚")
+	btnLashRemoval := m.Data("🔄 Ламин. + снятие", "service", "Ламинирование ресниц + снятие наращенных ресниц")
+
+	// Дополнительно
+	btnLipHair := m.Data("➕ Удаление пушка", "service", "Удаление пушка на губой")
+
+	// Комбо
+	btnCombo1 := m.Data("🎁 Organic + ламин. ресниц", "service", "Organic brow 🍈 + оформление бровей + ламинирование ресниц")
+	btnCombo2 := m.Data("🎁 Ламин. ресниц + бровей", "service", "Ламинирование ресниц + ламинирование бровей")
+	btnCombo3 := m.Data("🪞 Ламин. + оформление", "service", "Ламинирование ресниц + натуральное оформление бровей 🪞")
 
 	m.Inline(
-		m.Row(btnManicure, btnPedicure),
-		m.Row(btnExtension, btnGelPolish),
+		m.Row(btnOrganicBrow, btnOrganicBrowFull),
+		m.Row(btnBrowCorrection, btnBrowLamination),
+		m.Row(btnBrowStyling, btnBrowBleaching),
+		m.Row(btnBrowFull),
+		m.Row(btnLashLamination, btnLashRemoval),
+		m.Row(btnLipHair),
+		m.Row(btnCombo1),
+		m.Row(btnCombo2),
+		m.Row(btnCombo3),
 		m.Row(BtnBackToMain),
 	)
 	return m
