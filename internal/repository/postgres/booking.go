@@ -243,11 +243,11 @@ func (r *BookingRepo) ResetAll(ctx context.Context) error {
 }
 
 func (r *BookingRepo) GetTakenTimeSlots(ctx context.Context, date string, serviceName string) ([]string, error) {
-	// Преобразуем дату из формата DD.MM.YYYY в DATE для запроса
+	// Преобразуем дату из формата YYYY-MM-DD (от WebApp) в DATE для запроса
 	rows, err := r.db.Conn.Query(ctx, `
-        SELECT time_slot
+        SELECT time_slot, service_name
         FROM bookings
-        WHERE date = TO_DATE($1, 'DD.MM.YYYY') AND status = 'confirmed'
+        WHERE date = TO_DATE($1, 'YYYY-MM-DD') AND status = 'confirmed'
         ORDER BY time_slot`,
 		date,
 	)
@@ -258,11 +258,13 @@ func (r *BookingRepo) GetTakenTimeSlots(ctx context.Context, date string, servic
 
 	var result []string
 	for rows.Next() {
-		var timeSlot string
-		if err := rows.Scan(&timeSlot); err != nil {
+		var timeSlot, service string
+		if err := rows.Scan(&timeSlot, &service); err != nil {
 			return nil, err
 		}
+		log.Printf("🔍 [GetTakenTimeSlots] Дата=%s, Занят слот=%s, Услуга=%s", date, timeSlot, service)
 		result = append(result, timeSlot)
 	}
+	log.Printf("✅ [GetTakenTimeSlots] Итого занятых слотов на %s: %v", date, result)
 	return result, nil
 }
