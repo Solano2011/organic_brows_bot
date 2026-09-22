@@ -1,0 +1,336 @@
+:root {
+    --bg-color: #FAF8F5;
+    --card-bg: #FFFFFF;
+    --text-main: #222222;
+    --text-muted: #888888;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    padding: 20px 16px;
+    padding-bottom: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    user-select: none;
+    min-height: 100vh;
+}
+
+.container {
+    width: 100%;
+    max-width: 420px;
+    animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- ШАПКА --- */
+.header {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-bottom: 24px;
+    margin-top: 10px;
+}
+
+.header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-main);
+    letter-spacing: -0.5px;
+}
+
+/* --- КАРТОЧКИ УСЛУГ --- */
+.service-selector {
+    display: none;
+}
+
+.service-selector.active {
+    display: block;
+}
+
+.services-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.service-card {
+    background-color: var(--card-bg);
+    border-radius: 20px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+    border: none;
+    width: 100%;
+    cursor: pointer;
+    text-align: left;
+    transition: transform 0.2s ease;
+}
+
+.service-card:active {
+    transform: scale(0.98);
+}
+
+.service-image {
+    width: 72px;
+    height: 72px;
+    border-radius: 14px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.service-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.service-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.service-price {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* --- ВТОРОЙ ЭКРАН: ЗАГОЛОВОК УСЛУГИ С КАРТИНКОЙ --- */
+.service-header {
+    /* Затемняющий градиент + твоя картинка Shapka.jpg */
+    background: linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35)), 
+                url('/static/img/Shapka.jpg') center/cover no-repeat;
+    border-radius: 20px;
+    padding: 48px 20px;
+    margin-bottom: 28px;
+    text-align: center;
+    border: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.service-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #ffffff; /* Белый текст на фоне затемненной картинки */
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.service-subtitle {
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* --- СЕКЦИИ И ДАТЫ --- */
+.section {
+    margin-bottom: 28px;
+}
+
+.section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.date-scroll {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 4px 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.date-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.date-chip {
+    min-width: 85px;
+    padding: 16px 12px;
+    background: var(--card-bg);
+    border: 2px solid transparent;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+}
+
+.date-chip:active {
+    transform: scale(0.96);
+}
+
+.date-chip .date-day {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.date-chip .date-num {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-main);
+    /* Добавляем эти 3 строчки, чтобы принудительно переносить текст: */
+    width: min-content;
+    margin: 0 auto;
+    line-height: 1.2; 
+}
+
+.date-chip.selected {
+    background-color: var(--text-main);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.date-chip.selected .date-day,
+.date-chip.selected .date-num {
+    color: #ffffff;
+}
+
+/* --- ВЫБОР ВРЕМЕНИ --- */
+.time-picker {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.time-picker.active {
+    display: block;
+}
+
+.time-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.time-chip {
+    padding: 14px 10px;
+    background: var(--card-bg);
+    border: none;
+    border-radius: 14px;
+    color: var(--text-main);
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+}
+
+.time-chip:active {
+    transform: scale(0.96);
+}
+
+.time-chip.selected {
+    background-color: var(--text-main);
+    color: #ffffff;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.time-chip.taken {
+    background: #EFEFEF !important;
+    color: #B0B0B0 !important;
+    pointer-events: none;
+    box-shadow: none !important;
+}
+
+/* --- ФОРМА КОНТАКТОВ --- */
+.contact-form {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.contact-form.active {
+    display: block;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.input-field {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: none;
+    background: var(--card-bg);
+    color: var(--text-main);
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+}
+
+.input-field::placeholder {
+    color: #C4C4C4;
+}
+
+.input-field:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(34, 34, 34, 0.15);
+}
+
+textarea.input-field {
+    min-height: 100px;
+    resize: vertical;
+    font-family: inherit;
+}
+
+/* КНОПКА НАЗАД */
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 18px;
+    background: var(--card-bg);
+    border: none;
+    border-radius: 14px;
+    color: var(--text-main);
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+}
+
+.back-btn:active {
+    transform: scale(0.96) translateX(-4px);
+}

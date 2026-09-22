@@ -1,0 +1,261 @@
+package service_test
+
+import (
+	"context"
+	"errors"
+	"testing"
+
+	"hookah-bot/internal/domain"
+	"hookah-bot/internal/service"
+)
+
+type mockBookingRepo struct {
+	saveDraftFunc               func(ctx context.Context, userID int64, serviceName string) error
+	setDraftDateFunc            func(ctx context.Context, userID int64, date string) error
+	setDraftTimeAndContactsFunc func(ctx context.Context, userID int64, timeSlot string, name string, phone string, comment string) error
+	completeBookingFunc         func(ctx context.Context, userID int64, timeSlot string, name string, phone string, comment string) (*domain.Booking, error)
+	getByUserIDFunc             func(ctx context.Context, userID int64) (*domain.Booking, error)
+	getDraftByUserIDFunc        func(ctx context.Context, userID int64) (*domain.Booking, error)
+	deleteFunc                  func(ctx context.Context, userID int64) error
+	deleteConfirmedFunc         func(ctx context.Context, userID int64) error
+	deleteDraftFunc             func(ctx context.Context, userID int64) error
+	getAllActiveFunc            func(ctx context.Context) ([]domain.Booking, error)
+	getTakenTimeSlotsFunc       func(ctx context.Context, date string, serviceName string) ([]string, error)
+	resetAllFunc                func(ctx context.Context) error
+}
+
+func (m *mockBookingRepo) SaveDraft(ctx context.Context, userID int64, serviceName string) error {
+	if m.saveDraftFunc != nil {
+		return m.saveDraftFunc(ctx, userID, serviceName)
+	}
+	return nil
+}
+
+func (m *mockBookingRepo) SetDraftDate(ctx context.Context, userID int64, date string) error {
+	if m.setDraftDateFunc != nil {
+		return m.setDraftDateFunc(ctx, userID, date)
+	}
+	return nil
+}
+
+func (m *mockBookingRepo) SetDraftTimeAndContacts(ctx context.Context, userID int64, timeSlot string, name string, phone string, comment string) error {
+	if m.setDraftTimeAndContactsFunc != nil {
+		return m.setDraftTimeAndContactsFunc(ctx, userID, timeSlot, name, phone, comment)
+	}
+	return nil
+}
+
+func (m *mockBookingRepo) CompleteBooking(ctx context.Context, userID int64, timeSlot string, name string, phone string, comment string) (*domain.Booking, error) {
+	if m.completeBookingFunc != nil {
+		return m.completeBookingFunc(ctx, userID, timeSlot, name, phone, comment)
+	}
+	return nil, nil
+}
+
+func (m *mockBookingRepo) GetByUserID(ctx context.Context, userID int64) (*domain.Booking, error) {
+	if m.getByUserIDFunc != nil {
+		return m.getByUserIDFunc(ctx, userID)
+	}
+	return nil, nil
+}
+
+func (m *mockBookingRepo) GetDraftByUserID(ctx context.Context, userID int64) (*domain.Booking, error) {
+	if m.getDraftByUserIDFunc != nil {
+		return m.getDraftByUserIDFunc(ctx, userID)
+	}
+	return nil, nil
+}
+
+func (m *mockBookingRepo) Delete(ctx context.Context, userID int64) error {
+	if m.deleteFunc != nil {
+		return m.deleteFunc(ctx, userID)
+	}
+	return nil
+}
+
+func (m *mockBookingRepo) DeleteConfirmed(ctx context.Context, userID int64) error {
+	if m.deleteConfirmedFunc != nil {
+		return m.deleteConfirmedFunc(ctx, userID)
+	}
+	return nil
+}
+
+func (m *mockBookingRepo) DeleteDraft(ctx context.Context, userID int64) error {
+	if m.deleteDraftFunc != nil {
+		return m.deleteDraftFunc(ctx, userID)
+	}
+	return nil
+}
+
+func (m *mockBookingRepo) GetAllActive(ctx context.Context) ([]domain.Booking, error) {
+	if m.getAllActiveFunc != nil {
+		return m.getAllActiveFunc(ctx)
+	}
+	return nil, nil
+}
+
+func (m *mockBookingRepo) ResetAll(ctx context.Context) error {
+	if m.resetAllFunc != nil {
+		return m.resetAllFunc(ctx)
+	}
+	return nil
+}
+
+func (m *mockBookingRepo) GetTakenTimeSlots(ctx context.Context, date string, serviceName string) ([]string, error) {
+	if m.getTakenTimeSlotsFunc != nil {
+		return m.getTakenTimeSlotsFunc(ctx, date, serviceName)
+	}
+	return nil, nil
+}
+
+func TestBookingSvc_StartBookingDraft(t *testing.T) {
+	ctx := context.Background()
+	const expectedUserID = int64(12345)
+	const expectedService = "Наращивание ногтей"
+
+	var savedUser int64
+	var savedService string
+
+	mockRepo := &mockBookingRepo{
+		saveDraftFunc: func(ctx context.Context, userID int64, serviceName string) error {
+			savedUser = userID
+			savedService = serviceName
+			return nil
+		},
+	}
+
+	svc := service.NewBookingService(mockRepo)
+	err := svc.StartBookingDraft(ctx, expectedUserID, expectedService)
+
+	if err != nil {
+		t.Fatalf("ожидалось nil, получена ошибка: %v", err)
+	}
+	if savedUser != expectedUserID || savedService != expectedService {
+		t.Errorf("некорректные данные: user=%d, service=%s", savedUser, savedService)
+	}
+}
+
+func TestBookingSvc_CompleteBookingDraft(t *testing.T) {
+	ctx := context.Background()
+	const userID = int64(999)
+
+	tests := []struct {
+		name         string
+		completeRes  *domain.Booking
+		completeErr  error
+		expectedErr  error
+		expectedTime string
+	}{
+		{
+			name: "Успешное завершение брони",
+			completeRes: &domain.Booking{
+				UserID:      userID,
+				ServiceName: "Наращивание ногтей",
+				TimeSlot:    "14:00",
+				UserName:    "Мария",
+				Phone:       "+79991112233",
+				Comment:     "Хочу френч",
+			},
+			completeErr:  nil,
+			expectedErr:  nil,
+			expectedTime: "14:00",
+		},
+		{
+			name:        "Черновик не найден",
+			completeRes: nil,
+			completeErr: domain.ErrBookingNotFound,
+			expectedErr: domain.ErrBookingNotFound,
+		},
+		{
+			name:        "Слот времени уже занят",
+			completeRes: nil,
+			completeErr: domain.ErrTimeSlotTaken,
+			expectedErr: domain.ErrTimeSlotTaken,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &mockBookingRepo{
+				completeBookingFunc: func(ctx context.Context, uID int64, slot string, name string, phone string, comment string) (*domain.Booking, error) {
+					return tt.completeRes, tt.completeErr
+				},
+			}
+
+			svc := service.NewBookingService(repo)
+			res, err := svc.CompleteBookingDraft(ctx, userID, "14:00", "Мария", "+79991112233", "Хочу френч")
+
+			if !errors.Is(err, tt.expectedErr) {
+				t.Fatalf("ожидалась ошибка %v, получена %v", tt.expectedErr, err)
+			}
+
+			if tt.expectedErr == nil {
+				if res == nil {
+					t.Fatal("ожидалась бронь, получен nil")
+				}
+				if res.TimeSlot != tt.expectedTime {
+					t.Errorf("ожидался слот %s, получен %s", tt.expectedTime, res.TimeSlot)
+				}
+			}
+		})
+	}
+}
+
+func TestBookingSvc_CancelBooking(t *testing.T) {
+	ctx := context.Background()
+	const userID = int64(777)
+	deleted := false
+
+	repo := &mockBookingRepo{
+		deleteFunc: func(ctx context.Context, id int64) error {
+			if id == userID {
+				deleted = true
+			}
+			return nil
+		},
+	}
+
+	svc := service.NewBookingService(repo)
+	err := svc.CancelBooking(ctx, userID)
+
+	if err != nil {
+		t.Fatalf("неожиданная ошибка: %v", err)
+	}
+	if !deleted {
+		t.Error("ожидалось удаление записи из репозитория")
+	}
+}
+
+func TestBookingSvc_AdminMethods(t *testing.T) {
+	ctx := context.Background()
+	activeCalled := false
+	resetCalled := false
+
+	repo := &mockBookingRepo{
+		getAllActiveFunc: func(ctx context.Context) ([]domain.Booking, error) {
+			activeCalled = true
+			return []domain.Booking{{
+				UserID:      1,
+				ServiceName: "Наращивание ногтей",
+				TimeSlot:    "14:00",
+				UserName:    "Тест",
+				Phone:       "+7000",
+			}}, nil
+		},
+		resetAllFunc: func(ctx context.Context) error {
+			resetCalled = true
+			return nil
+		},
+	}
+
+	svc := service.NewBookingService(repo)
+
+	bookings, err := svc.GetAllActiveBookings(ctx)
+	if err != nil || len(bookings) != 1 || !activeCalled {
+		t.Errorf("ошибка вызова GetAllActiveBookings")
+	}
+
+	if err := svc.ResetAllBookings(ctx); err != nil || !resetCalled {
+		t.Errorf("ошибка вызова ResetAllBookings")
+	}
+}
