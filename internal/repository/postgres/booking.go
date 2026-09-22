@@ -42,9 +42,9 @@ func (r *BookingRepo) SaveDraft(ctx context.Context, userID int64, serviceName s
 }
 
 func (r *BookingRepo) SetDraftDate(ctx context.Context, userID int64, date string) error {
-	// Преобразуем дату из формата DD.MM.YYYY в DATE
+	// Преобразуем дату из формата YYYY-MM-DD (ISO 8601 от WebApp) в DATE
 	cmdTag, err := r.db.Conn.Exec(ctx, `
-        UPDATE bookings SET date = TO_DATE($1, 'DD.MM.YYYY')
+        UPDATE bookings SET date = TO_DATE($1, 'YYYY-MM-DD')
         WHERE user_id = $2 AND status = 'draft'`,
 		date, userID,
 	)
