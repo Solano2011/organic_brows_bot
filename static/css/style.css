@@ -31,6 +31,55 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* --- ПРОФИЛЬ МАСТЕРА --- */
+.master-profile {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 14px;
+    margin-bottom: 8px;
+    margin-top: 4px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+}
+
+.master-avatar {
+    width: 68px;
+    height: 68px;
+    border-radius: 14px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.master-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.master-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-main);
+    letter-spacing: -0.3px;
+    line-height: 1.25;
+}
+
+.master-address,
+.master-phone {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.4;
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+.master-phone {
+    margin-top: 2px;
+}
+
 /* --- ШАПКА --- */
 .header {
     display: flex;
