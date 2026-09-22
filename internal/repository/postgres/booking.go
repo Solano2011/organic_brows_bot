@@ -82,10 +82,11 @@ func (r *BookingRepo) CompleteBooking(ctx context.Context, userID int64, timeSlo
 	defer tx.Rollback(ctx)
 
 	// 1. Получаем текущий черновик
-	var serviceName, date string
+	var serviceName string
+	var dateVal time.Time
 	err = tx.QueryRow(ctx, `
         SELECT service_name, date FROM bookings
-        WHERE user_id = $1 AND status = 'draft'`, userID).Scan(&serviceName, &date)
+        WHERE user_id = $1 AND status = 'draft'`, userID).Scan(&serviceName, &dateVal)
 
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, domain.ErrBookingNotFound
@@ -99,7 +100,7 @@ func (r *BookingRepo) CompleteBooking(ctx context.Context, userID int64, timeSlo
         SELECT id FROM bookings
         WHERE service_name = $1 AND time_slot = $2 AND date = $3 AND status = 'confirmed'
         FOR UPDATE`,
-		serviceName, timeSlot, date).Scan(&conflictID)
+		serviceName, timeSlot, dateVal).Scan(&conflictID)
 
 	if err == nil {
 		return nil, domain.ErrTimeSlotTaken
@@ -109,13 +110,21 @@ func (r *BookingRepo) CompleteBooking(ctx context.Context, userID int64, timeSlo
 
 	// 3. Обновляем статус черновика на confirmed
 	var b domain.Booking
+	var dateValResult time.Time
 	err = tx.QueryRow(ctx, `
         UPDATE bookings
         SET time_slot = $1, user_name = $2, phone = $3, comment = $4, status = 'confirmed', created_at = $5
         WHERE user_id = $6 AND status = 'draft'
         RETURNING user_id, service_name, time_slot, date, user_name, phone, comment, created_at`,
 		timeSlot, name, phone, comment, time.Now(), userID,
-	).Scan(&b.UserID, &b.ServiceName, &b.TimeSlot, &b.Date, &b.UserName, &b.Phone, &b.Comment, &b.CreatedAt)
+	).Scan(&b.UserID, &b.ServiceName, &b.TimeSlot, &dateValResult, &b.UserName, &b.Phone, &b.Comment, &b.CreatedAt)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Преобразуем DATE обратно в формат DD.MM.YYYY для отображения
+	b.Date = dateValResult.Format("02.01.2006")
 
 	if err != nil {
 		return nil, err
