@@ -168,3 +168,15 @@ function submitBooking() {
         tg.showAlert("Ошибка при записи: " + error.message);
     });
 }
+
+function toggleDescription(event, btn) {
+    event.stopPropagation(); // Важно: предотвращаем клик по самой карточке (запись)
+    const desc = btn.nextElementSibling;
+    if (desc.style.display === 'block') {
+        desc.style.display = 'none';
+        btn.innerText = 'Подробнее об услуге';
+    } else {
+        desc.style.display = 'block';
+        btn.innerText = 'Скрыть описание';
+    }
+}
