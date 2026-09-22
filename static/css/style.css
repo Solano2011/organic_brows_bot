@@ -34,11 +34,12 @@ body {
 /* --- ПРОФИЛЬ МАСТЕРА --- */
 .master-profile {
     display: flex;
-    align-items: flex-start;
+    align-items: stretch;
     gap: 14px;
     background: var(--card-bg);
     border-radius: 20px;
-    padding: 14px;
+    padding: 16px 16px 20px;
+    min-height: 118px;
     margin-bottom: 8px;
     margin-top: 4px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
@@ -56,6 +57,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 4px;
+    flex: 1;
     min-width: 0;
 }
 
@@ -78,6 +80,22 @@ body {
 
 .master-phone {
     margin-top: 2px;
+}
+
+.map-button {
+    align-self: flex-end;
+    margin-top: auto;
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 12px;
+    background: #f0f0f0;
+    color: var(--text-main);
+    border: 1px solid #ccc;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
 }
 
 /* --- ШАПКА --- */
