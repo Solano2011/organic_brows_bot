@@ -5,7 +5,7 @@ let selectedServiceName = "";
 let selectedTime = "";
 let selectedDate = "";
 
-tg.MainButton.setText("Записаться 💅");
+tg.MainButton.setText("ЗАПИСАТЬСЯ");
 tg.MainButton.color = "#d4a574";
 tg.MainButton.textColor = "#FFFFFF";
 tg.MainButton.hide();

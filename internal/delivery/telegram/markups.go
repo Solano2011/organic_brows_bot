@@ -125,9 +125,9 @@ func BuildReplaceConfirmMenu() *tele.ReplyMarkup {
 func BuildAdminMenu(bookings []domain.Booking) *tele.ReplyMarkup {
 	m := &tele.ReplyMarkup{}
 	rows := make([]tele.Row, 0, len(bookings)+2)
-	for _, b := range bookings {
+	for i, b := range bookings {
 		btn := tele.Btn{
-			Text: fmt.Sprintf("❌ Удалить #%s", b.ID),
+			Text: fmt.Sprintf("❌ Удалить №%d", i+1),
 			Data: fmt.Sprintf("del_book:%s", b.ID),
 		}
 		rows = append(rows, m.Row(btn))

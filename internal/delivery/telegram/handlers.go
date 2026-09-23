@@ -248,12 +248,12 @@ func (h *Handlers) handleMyBookings(c tele.Context) error {
 	text := fmt.Sprintf(
 		"📋 *Ваша активная запись:*\n"+
 			"━━━━━━━━━━━━━━━\n"+
-			"💅 Услуга: `%s`\n"+
-			"📅 Дата: `%s`\n"+
-			"⏰ Время: `%s`\n"+
-			"👤 Имя: `%s`\n"+
-			"📞 Телефон: `%s`\n"+
-			"💬 Комментарий: `%s`\n\n"+
+			"Услуга: `%s`\n"+
+			"Дата: `%s`\n"+
+			"Время: `%s`\n"+
+			"Имя: `%s`\n"+
+			"Телефон: `%s`\n"+
+			"Комментарий: `%s`\n\n"+
 			"Для отмены записи используйте кнопку ниже.",
 		b.ServiceName, b.Date, b.TimeSlot, b.UserName, b.Phone, b.Comment,
 	)
@@ -281,12 +281,12 @@ func (h *Handlers) handleMyBookingBtn(c tele.Context) error {
 	text := fmt.Sprintf(
 		"📋 *Ваша запись:*\n"+
 			"━━━━━━━━━━━━━━━\n"+
-			"💅 Услуга: `%s`\n"+
-			"📅 Дата: `%s`\n"+
-			"⏰ Время: `%s`\n"+
-			"👤 Имя: `%s`\n"+
-			"📞 Телефон: `%s`\n"+
-			"💬 Комментарий: `%s`",
+			"Услуга: `%s`\n"+
+			"Дата: `%s`\n"+
+			"Время: `%s`\n"+
+			"Имя: `%s`\n"+
+			"Телефон: `%s`\n"+
+			"Комментарий: `%s`",
 		b.ServiceName, b.Date, b.TimeSlot, b.UserName, b.Phone, b.Comment,
 	)
 	return c.Send(text, m, tele.ModeMarkdown)
