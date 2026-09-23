@@ -415,11 +415,8 @@ func (h *Handlers) handleConfirmReplace(c tele.Context) error {
 
 	_ = c.Delete()
 
-	// 3. Открываем WebApp через REPLY-клавиатуру (не Inline!)
-	webAppURL := fmt.Sprintf("%s?service=%s", h.webAppBaseURL, strings.ReplaceAll(draft.ServiceName, " ", "+"))
-
-	text := fmt.Sprintf("✅ Старая запись отменена.\n\n💅 *Выбрана услуга:*\n`%s`\n\nНажмите кнопку ниже, чтобы выбрать дату и время:", draft.ServiceName)
-	return c.Send(text, BuildWebAppReplyKeyboard(webAppURL), tele.ModeMarkdown)
+	text := fmt.Sprintf("✅ Старая запись отменена.\n\n*Выбрана услуга:*\n`%s`\n\nНажмите на кнопку «Запись» слева внизу экрана, чтобы выбрать новую дату и время.", draft.ServiceName)
+	return c.Send(text, tele.ModeMarkdown)
 }
 
 func (h *Handlers) handleKeepOldBooking(c tele.Context) error {
