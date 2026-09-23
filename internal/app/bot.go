@@ -182,9 +182,9 @@ func Run(token string, adminID int64, db *postgres.DB, webAppURL string) {
 				user := &tele.User{ID: data.UserID}
 				text := fmt.Sprintf(
 					"⚠️ *У вас уже есть активная запись:*\n\n"+
-						"💅 Услуга: `%s`\n"+
-						"📅 Дата: `%s`\n"+
-						"⏰ Время: `%s`\n\n"+
+						"Услуга: `%s`\n"+
+						"Дата: `%s`\n"+
+						"Время: `%s`\n\n"+
 						"Хотите отменить предыдущую запись и создать новую на `%s` (`%s`) в `%s`?",
 					existingBooking.ServiceName, existingBooking.Date, existingBooking.TimeSlot,
 					data.ServiceName, data.Date, data.Time,
