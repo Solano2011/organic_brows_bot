@@ -231,11 +231,11 @@ func Run(token string, adminID int64, db *postgres.DB, webAppURL string) {
 			confirmText := fmt.Sprintf(
 				"✅ *Запись успешно подтверждена!*\n"+
 					"━━━━━━━━━━━━━━━\n"+
-					"💅 Услуга: `%s`\n"+
-					"📅 Дата: `%s`\n"+
-					"⏰ Время: `%s`\n"+
-					"👤 Имя: `%s`\n"+
-					"📞 Телефон: `%s`\n",
+					"Услуга: `%s`\n"+
+					"Дата: `%s`\n"+
+					"Время: `%s`\n"+
+					"Имя: `%s`\n"+
+					"Телефон: `%s`\n",
 				booking.ServiceName, booking.Date, booking.TimeSlot, booking.UserName, booking.Phone,
 			)
 
@@ -243,7 +243,7 @@ func Run(token string, adminID int64, db *postgres.DB, webAppURL string) {
 				confirmText += fmt.Sprintf("💬 Комментарий: `%s`\n", booking.Comment)
 			}
 
-			confirmText += "\n✨ Статус: *Подтверждено*\n\nЖдем вас!"
+			confirmText += "\nСтатус: *Подтверждено*\n\nЖдем вас!"
 
 			_, err = b.Send(user, confirmText, telegram.BuildInlineMainMenu(webAppURL), tele.ModeMarkdown)
 			if err != nil {

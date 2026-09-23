@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"html"
 	"log"
 	"strconv"
 	"strings"
@@ -214,11 +215,11 @@ func (h *Handlers) handleWebApp(c tele.Context) error {
 	text := fmt.Sprintf(
 		"✅ *Запись успешно подтверждена!*\n"+
 			"━━━━━━━━━━━━━━━\n"+
-			"💅 Услуга: `%s`\n"+
-			"📅 Дата: `%s`\n"+
-			"⏰ Время: `%s`\n"+
-			"👤 Имя: `%s`\n"+
-			"📞 Телефон: `%s`\n"+
+			"Услуга: `%s`\n"+
+			"Дата: `%s`\n"+
+			"Время: `%s`\n"+
+			"Имя: `%s`\n"+
+			"Телефон: `%s`\n"+
 			"💬 Комментарий: `%s`\n\n"+
 			"Жду вас! 💖",
 		booking.ServiceName, booking.Date, booking.TimeSlot, booking.UserName, booking.Phone, booking.Comment,
@@ -314,13 +315,20 @@ func (h *Handlers) renderAdminDashboard(ctx context.Context) (string, []domain.B
 		return "", nil, err
 	}
 	if len(bookings) == 0 {
-		return "🛠 *Панель администратора*\n\nНа сегодня активных записей нет.", bookings, nil
+		return "🛠 <b>Панель администратора</b>\n\nНа сегодня активных записей нет.", bookings, nil
 	}
 	var sb strings.Builder
-	fmt.Fprintf(&sb, "🛠 *Панель администратора*\nВсего активных записей: *%d*\n━━━━━━━━━━━━━━━\n", len(bookings))
+	fmt.Fprintf(&sb, "🛠 <b>Панель администратора</b>\nВсего активных записей: <b>%d</b>\n━━━━━━━━━━━━━━━\n", len(bookings))
 	for i, b := range bookings {
-		fmt.Fprintf(&sb, "*%d.* 💅 `%s` | 📅 `%s` | ⏰ `%s`\n   👤 %s | 📞 %s\n   💬 %s\n   🆔 Гость: `%d`\n\n",
-			i+1, b.ServiceName, b.Date, b.TimeSlot, b.UserName, b.Phone, b.Comment, b.UserID)
+		fmt.Fprintf(&sb, "<b>%d.</b> %s | <b>%s</b> | <b>%s</b>\n   👤 %s | 📞 %s\n   💬 %s\n   🆔 Гость: <code>%d</code>\n\n",
+			i+1,
+			html.EscapeString(b.ServiceName),
+			html.EscapeString(b.Date),
+			html.EscapeString(b.TimeSlot),
+			html.EscapeString(b.UserName),
+			html.EscapeString(b.Phone),
+			html.EscapeString(b.Comment),
+			b.UserID)
 	}
 	return sb.String(), bookings, nil
 }
@@ -330,7 +338,7 @@ func (h *Handlers) handleAdmin(c tele.Context) error {
 		return c.Send("❌ У вас нет прав администратора.")
 	}
 	text, bookings, _ := h.renderAdminDashboard(context.Background())
-	return c.Send(text, BuildAdminMenu(bookings), tele.ModeMarkdown)
+	return c.Send(text, BuildAdminMenu(bookings), tele.ModeHTML)
 }
 
 func (h *Handlers) handleAdminRefresh(c tele.Context) error {
@@ -339,7 +347,7 @@ func (h *Handlers) handleAdminRefresh(c tele.Context) error {
 	}
 	text, bookings, _ := h.renderAdminDashboard(context.Background())
 	_ = c.Delete()
-	return c.Send(text, BuildAdminMenu(bookings), tele.ModeMarkdown)
+	return c.Send(text, BuildAdminMenu(bookings), tele.ModeHTML)
 }
 
 func (h *Handlers) handleAdminResetAll(c tele.Context) error {
@@ -378,7 +386,7 @@ func (h *Handlers) handleDeleteBooking(c tele.Context) error {
 	}
 
 	text, bookings, _ := h.renderAdminDashboard(ctx)
-	_ = c.Edit(text, tele.ModeMarkdown)
+	_ = c.Edit(text, tele.ModeHTML)
 	_, _ = h.bot.EditReplyMarkup(c.Callback(), BuildAdminMenu(bookings))
 	return c.Respond(&tele.CallbackResponse{Text: fmt.Sprintf("Запись #%d удалена", id)})
 }
