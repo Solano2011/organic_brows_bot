@@ -199,13 +199,13 @@ func (h *Handlers) handleWebApp(c tele.Context) error {
 		notifyText := fmt.Sprintf(
 			"🔔 *НОВАЯ ЗАПИСЬ В СИСТЕМЕ*\n"+
 				"━━━━━━━━━━━━━━━\n"+
-				"👤 *Имя:* %s\n"+
-				"📞 *Телефон:* %s\n"+
-				"🆔 Гость: %s\n"+
-				"💅 *Услуга:* %s\n"+
-				"📅 *Дата:* %s\n"+
-				"⏰ *Время:* %s\n"+
-				"💬 *Комментарий:* %s",
+				"*Имя:* %s\n"+
+				"*Телефон:* %s\n"+
+				"Гость: %s\n"+
+				"*Услуга:* %s\n"+
+				"*Дата:* %s\n"+
+				"*Время:* %s\n"+
+				"*Комментарий:* %s",
 			booking.UserName, booking.Phone, usernameStr, booking.ServiceName, booking.Date, booking.TimeSlot, booking.Comment,
 		)
 		go func(msg string) { _, _ = h.bot.Send(tele.ChatID(h.adminID), msg, tele.ModeMarkdown) }(notifyText)

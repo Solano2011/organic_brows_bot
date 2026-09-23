@@ -255,18 +255,18 @@ func Run(token string, adminID int64, db *postgres.DB, webAppURL string) {
 				adminText := fmt.Sprintf(
 					"🔔 *НОВАЯ ЗАПИСЬ*\n"+
 						"━━━━━━━━━━━━━━━\n"+
-						"👤 *Имя:* %s\n"+
-						"📞 *Телефон:* %s\n"+
-						"🆔 ID: `%d`\n"+
-						"💅 Услуга: *%s*\n"+
-						"📅 Дата: *%s*\n"+
-						"⏰ Время: *%s*\n",
+						"*Имя:* %s\n"+
+						"*Телефон:* %s\n"+
+						"ID: `%d`\n"+
+						"Услуга: *%s*\n"+
+						"Дата: *%s*\n"+
+						"Время: *%s*\n",
 					booking.UserName, booking.Phone, booking.UserID,
 					booking.ServiceName, booking.Date, booking.TimeSlot,
 				)
 
 				if booking.Comment != "" {
-					adminText += fmt.Sprintf("💬 Комментарий: *%s*\n", booking.Comment)
+					adminText += fmt.Sprintf("Комментарий: *%s*\n", booking.Comment)
 				}
 
 				admin := &tele.User{ID: adminID}
