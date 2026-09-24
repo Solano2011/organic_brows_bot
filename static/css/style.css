@@ -191,37 +191,35 @@ body {
     margin: 0;
 }
 
-/* --- ВТОРОЙ ЭКРАН: ЗАГОЛОВОК УСЛУГИ С КАРТИНКОЙ --- */
+/* --- ВТОРОЙ ЭКРАН: ЗАГОЛОВОК УСЛУГИ --- */
 .service-header {
-    /* Затемняющий градиент + твоя картинка Shapka.jpg */
-    background: linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35)), 
-                url('/static/img/Shapka.jpg') center/cover no-repeat;
+    background: none;
+    background-color: transparent;
     border-radius: 20px;
     padding: 48px 20px;
     margin-bottom: 28px;
     text-align: center;
     border: none;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+    box-shadow: none;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    color: #000000 !important;
 }
 
 .service-title {
     font-size: 28px;
     font-weight: 700;
-    color: #ffffff; /* Белый текст на фоне затемненной картинки */
+    color: #000000 !important;
     margin-bottom: 8px;
     letter-spacing: -0.5px;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .service-subtitle {
     font-size: 15px;
-    color: rgba(255, 255, 255, 0.9);
+    color: #000000 !important;
     font-weight: 500;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
 }
 
 /* --- СЕКЦИИ И ДАТЫ --- */

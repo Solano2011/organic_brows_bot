@@ -6,8 +6,10 @@ let selectedTime = "";
 let selectedDate = "";
 
 tg.MainButton.setText("ЗАПИСАТЬСЯ");
-tg.MainButton.color = "#d4a574";
-tg.MainButton.textColor = "#FFFFFF";
+tg.MainButton.setParams({
+    color: '#ffffff',
+    text_color: '#000000'
+});
 tg.MainButton.hide();
 
 tg.MainButton.onClick(submitBooking);
