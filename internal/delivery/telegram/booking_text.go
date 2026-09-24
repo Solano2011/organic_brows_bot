@@ -32,18 +32,24 @@ func servicePrice(name string) string {
 
 func FormatClientBooking(serviceName, date, timeSlot string) string {
 	return fmt.Sprintf(
-		"Вы записались к специалисту: %s\nАдрес: Советская улица, 7, 2 этаж, 10 кабинет\nУслуга: %s\nДата: %s\nВремя: %s\nСтоимость услуги: %s",
+		"Вы записались к специалисту:\n"+
+			"%s\n\n"+
+			"Услуга: %s\n"+
+			"Стоимость услуги: %s\n\n"+
+			"Дата: %s\n"+
+			"Время: %s\n"+
+			"Адрес: Советская улица, 7/6, 2 этаж, 10 кабинет",
 		masterContact,
 		html.EscapeString(serviceName),
+		html.EscapeString(servicePrice(serviceName)),
 		html.EscapeString(date),
 		html.EscapeString(timeSlot),
-		html.EscapeString(servicePrice(serviceName)),
 	)
 }
 
 func FormatReminder(intro, serviceName, date, timeSlot string) string {
 	return fmt.Sprintf(
-		"%s %s\nУслуга: %s\nДата: %s\nВремя: %s\nСтоимость услуги: %s",
+		"%s %s\nАдрес: Советская улица, 7/6, 2 этаж, 10 кабинет\nУслуга: %s\nДата: %s\nВремя: %s\nСтоимость услуги: %s",
 		intro,
 		masterContact,
 		html.EscapeString(serviceName),
