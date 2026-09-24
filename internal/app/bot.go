@@ -231,7 +231,7 @@ func Run(token string, adminID int64, db *postgres.DB, webAppURL string) {
 			user := &tele.User{ID: data.UserID}
 			confirmText := telegram.FormatClientBooking(booking.ServiceName, booking.Date, booking.TimeSlot)
 
-			_, err = b.Send(user, confirmText, telegram.BuildInlineMainMenu(webAppURL), tele.ModeHTML)
+			_, err = b.Send(user, confirmText, telegram.BuildBookingSuccessMenu(webAppURL), tele.ModeHTML)
 			if err != nil {
 				log.Printf("⚠️ Ошибка при отправке сообщения: %v", err)
 			}

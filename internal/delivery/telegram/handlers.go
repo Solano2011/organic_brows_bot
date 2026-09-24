@@ -54,6 +54,7 @@ func (h *Handlers) InitRoutes(b *tele.Bot) {
 
 	// Обработчик кнопки "Моя бронь"
 	b.Handle(&BtnMyBookings, h.handleMyBookings)
+	b.Handle(&BtnHowToGet, h.handleHowToGet)
 
 	b.Handle(&BtnAdminRefresh, h.handleAdminRefresh)
 	b.Handle(&BtnAdminResetAll, h.handleAdminResetAll)
@@ -215,7 +216,18 @@ func (h *Handlers) handleWebApp(c tele.Context) error {
 	// Подтверждаем пользователю
 	text := FormatClientBooking(booking.ServiceName, booking.Date, booking.TimeSlot)
 
-	return c.Send(text, BuildInlineMainMenu(h.webAppBaseURL), tele.ModeHTML)
+	return c.Send(text, BuildBookingSuccessMenu(h.webAppBaseURL), tele.ModeHTML)
+}
+
+func (h *Handlers) handleHowToGet(c tele.Context) error {
+	if err := c.Respond(); err != nil {
+		return err
+	}
+	photo := &tele.Photo{
+		File:    tele.FromDisk("static/img/door.jpg"),
+		Caption: "Фото входа \n\nДалее нужно подняться на второй этаж, повернуть налево и идти до 10-го кабинета",
+	}
+	return c.Send(photo)
 }
 
 // handleMyBookings обрабатывает нажатие на кнопку "📅 Моя бронь"
