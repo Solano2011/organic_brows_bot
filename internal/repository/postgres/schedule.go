@@ -34,6 +34,51 @@ func (r *ScheduleRepo) SetWorkDay(ctx context.Context, date, start, end string) 
 	return err
 }
 
+func (r *ScheduleRepo) SaveSchedule(ctx context.Context, item domain.WorkSchedule) error {
+	start, end := item.StartTime, item.EndTime
+	if start == "" {
+		start = "10:00"
+	}
+	if end == "" {
+		end = "20:00"
+	}
+	_, err := r.db.Conn.Exec(ctx, `
+		INSERT INTO work_schedule (date, is_working_day, start_time, end_time)
+		VALUES ($1::date, $2, $3, $4)
+		ON CONFLICT (date) DO UPDATE
+		SET is_working_day = EXCLUDED.is_working_day,
+		    start_time = EXCLUDED.start_time,
+		    end_time = EXCLUDED.end_time`,
+		item.Date, item.IsWorkingDay, start, end)
+	return err
+}
+
+func (r *ScheduleRepo) ListMonth(ctx context.Context, year, month int) ([]domain.WorkSchedule, error) {
+	rows, err := r.db.Conn.Query(ctx, `
+		SELECT to_char(date, 'YYYY-MM-DD'), is_working_day, start_time, end_time
+		FROM work_schedule
+		WHERE date >= make_date($1, $2, 1)
+		  AND date < (make_date($1, $2, 1) + INTERVAL '1 month')
+		ORDER BY date`, year, month)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var items []domain.WorkSchedule
+	for rows.Next() {
+		var item domain.WorkSchedule
+		if err := rows.Scan(&item.Date, &item.IsWorkingDay, &item.StartTime, &item.EndTime); err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+	if items == nil {
+		items = []domain.WorkSchedule{}
+	}
+	return items, rows.Err()
+}
+
 func (r *ScheduleRepo) BlockTime(ctx context.Context, date, start, end string) error {
 	_, err := r.db.Conn.Exec(ctx, `
 		INSERT INTO time_blocks (date, start_time, end_time) VALUES ($1::date, $2, $3)`,

@@ -62,6 +62,10 @@ func (h *Handlers) handleBlockTime(c tele.Context) error {
 	return c.Send("Интервал " + parts[0] + "–" + parts[1] + " на " + parts[2] + " закрыт.")
 }
 
+func (h *Handlers) scheduleURL() string {
+	return strings.TrimRight(h.webAppBaseURL, "/") + "/admin/schedule"
+}
+
 func commandDate(value string) (string, error) {
 	parsed, err := time.Parse("02.01.2006", value)
 	if err != nil {

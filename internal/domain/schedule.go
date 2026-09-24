@@ -30,6 +30,8 @@ type BusyInterval struct {
 type ScheduleStore interface {
 	SetDayOff(ctx context.Context, date string) error
 	SetWorkDay(ctx context.Context, date, start, end string) error
+	SaveSchedule(ctx context.Context, item WorkSchedule) error
+	ListMonth(ctx context.Context, year, month int) ([]WorkSchedule, error)
 	BlockTime(ctx context.Context, date, start, end string) error
 	GetSchedule(ctx context.Context, date string) (*WorkSchedule, error)
 	GetSettings(ctx context.Context) (AdminSettings, error)

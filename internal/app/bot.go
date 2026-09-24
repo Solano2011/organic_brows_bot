@@ -12,7 +12,10 @@ import (
 	"sync"
 	"time"
 
+	"strconv"
+
 	"hookah-bot/internal/delivery/telegram"
+	"hookah-bot/internal/domain"
 	"hookah-bot/internal/repository/postgres"
 	"hookah-bot/internal/service"
 	"hookah-bot/internal/validation"
@@ -322,6 +325,72 @@ func Run(token string, adminID int64, db *postgres.DB, webAppURL string) {
 
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(map[string]bool{"success": true})
+		})
+
+		http.HandleFunc("/api/admin/schedule", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+			if r.Method == http.MethodOptions {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+			ctx := context.Background()
+			switch r.Method {
+			case http.MethodGet:
+				month, errM := strconv.Atoi(r.URL.Query().Get("month"))
+				year, errY := strconv.Atoi(r.URL.Query().Get("year"))
+				if errM != nil || errY != nil || month < 1 || month > 12 {
+					http.Error(w, "month and year are required", http.StatusBadRequest)
+					return
+				}
+				items, err := scheduleRepo.ListMonth(ctx, year, month)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				w.Header().Set("Content-Type", "application/json")
+				json.NewEncoder(w).Encode(items)
+			case http.MethodPost:
+				var item domain.WorkSchedule
+				if err := json.NewDecoder(r.Body).Decode(&item); err != nil {
+					http.Error(w, "invalid json", http.StatusBadRequest)
+					return
+				}
+				if _, err := time.Parse("2006-01-02", item.Date); err != nil {
+					http.Error(w, "invalid date", http.StatusBadRequest)
+					return
+				}
+				if item.IsWorkingDay {
+					if _, err := time.Parse("15:04", item.StartTime); err != nil {
+						http.Error(w, "invalid start time", http.StatusBadRequest)
+						return
+					}
+					if _, err := time.Parse("15:04", item.EndTime); err != nil {
+						http.Error(w, "invalid end time", http.StatusBadRequest)
+						return
+					}
+				}
+				if err := scheduleRepo.SaveSchedule(ctx, item); err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				w.Header().Set("Content-Type", "application/json")
+				json.NewEncoder(w).Encode(map[string]bool{"ok": true})
+			default:
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		})
+
+		http.HandleFunc("/admin/schedule", func(w http.ResponseWriter, r *http.Request) {
+			tmpl, err := template.ParseFiles("webapp/templates/admin_schedule.html")
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			if err := tmpl.ExecuteTemplate(w, "admin_schedule.html", nil); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 		})
 
 		// --- ЭНДПОИНТ ДЛЯ ПРОВЕРКИ ЗАНЯТОСТИ ---

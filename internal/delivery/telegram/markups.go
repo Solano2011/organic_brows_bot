@@ -134,15 +134,18 @@ func BuildReplaceConfirmMenu() *tele.ReplyMarkup {
 	return m
 }
 
-func BuildAdminMenu(bookings []domain.Booking) *tele.ReplyMarkup {
+func BuildAdminMenu(bookings []domain.Booking, scheduleURL string) *tele.ReplyMarkup {
 	m := &tele.ReplyMarkup{}
-	rows := make([]tele.Row, 0, len(bookings)+2)
+	rows := make([]tele.Row, 0, len(bookings)+3)
 	for i, b := range bookings {
 		btn := tele.Btn{
 			Text: fmt.Sprintf("❌ Удалить №%d", i+1),
 			Data: fmt.Sprintf("del_book:%s", b.ID),
 		}
 		rows = append(rows, m.Row(btn))
+	}
+	if scheduleURL != "" {
+		rows = append(rows, m.Row(m.WebApp("⚙️ Настроить график", &tele.WebApp{URL: scheduleURL})))
 	}
 	rows = append(rows, m.Row(BtnAdminRefresh), m.Row(BtnAdminResetAll))
 	m.Inline(rows...)

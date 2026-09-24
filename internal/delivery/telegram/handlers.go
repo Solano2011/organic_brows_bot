@@ -356,7 +356,7 @@ func (h *Handlers) handleAdmin(c tele.Context) error {
 		return c.Send("❌ У вас нет прав администратора.")
 	}
 	text, bookings, _ := h.renderAdminDashboard(context.Background())
-	return c.Send(text, BuildAdminMenu(bookings), tele.ModeHTML)
+	return c.Send(text, BuildAdminMenu(bookings, h.scheduleURL()), tele.ModeHTML)
 }
 
 func (h *Handlers) handleAdminRefresh(c tele.Context) error {
@@ -365,7 +365,7 @@ func (h *Handlers) handleAdminRefresh(c tele.Context) error {
 	}
 	text, bookings, _ := h.renderAdminDashboard(context.Background())
 	_ = c.Delete()
-	return c.Send(text, BuildAdminMenu(bookings), tele.ModeHTML)
+	return c.Send(text, BuildAdminMenu(bookings, h.scheduleURL()), tele.ModeHTML)
 }
 
 func (h *Handlers) handleAdminResetAll(c tele.Context) error {
@@ -375,7 +375,7 @@ func (h *Handlers) handleAdminResetAll(c tele.Context) error {
 	ctx := context.Background()
 	_ = h.bookingService.ResetAllBookings(ctx)
 	_ = c.Delete()
-	return c.Send("✅ *Все записи успешно отменены.*", BuildAdminMenu(nil), tele.ModeMarkdown)
+	return c.Send("✅ *Все записи успешно отменены.*", BuildAdminMenu(nil, h.scheduleURL()), tele.ModeMarkdown)
 }
 
 func (h *Handlers) handleCallback(c tele.Context) error {
@@ -410,7 +410,7 @@ func (h *Handlers) handleDeleteBooking(c tele.Context) error {
 
 	text, bookings, _ := h.renderAdminDashboard(ctx)
 	_ = c.Edit(text, tele.ModeHTML)
-	_, _ = h.bot.EditReplyMarkup(c.Callback(), BuildAdminMenu(bookings))
+	_, _ = h.bot.EditReplyMarkup(c.Callback(), BuildAdminMenu(bookings, h.scheduleURL()))
 	return c.Respond(&tele.CallbackResponse{Text: fmt.Sprintf("Запись #%d удалена", id)})
 }
 
