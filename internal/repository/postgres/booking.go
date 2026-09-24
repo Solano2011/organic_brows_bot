@@ -140,14 +140,15 @@ func (r *BookingRepo) CompleteBooking(ctx context.Context, userID int64, timeSlo
 
 func (r *BookingRepo) GetByUserID(ctx context.Context, userID int64) (*domain.Booking, error) {
 	var b domain.Booking
+	var id int
 	var dateVal time.Time
 	err := r.db.Conn.QueryRow(ctx, `
-        SELECT user_id, service_name, time_slot, date, COALESCE(user_name, ''), COALESCE(phone, ''), COALESCE(comment, ''), created_at
+        SELECT id, user_id, service_name, time_slot, date, COALESCE(user_name, ''), COALESCE(phone, ''), COALESCE(comment, ''), created_at
         FROM bookings
         WHERE user_id = $1 AND status = 'confirmed'
         ORDER BY created_at DESC LIMIT 1`,
 		userID,
-	).Scan(&b.UserID, &b.ServiceName, &b.TimeSlot, &dateVal, &b.UserName, &b.Phone, &b.Comment, &b.CreatedAt)
+	).Scan(&id, &b.UserID, &b.ServiceName, &b.TimeSlot, &dateVal, &b.UserName, &b.Phone, &b.Comment, &b.CreatedAt)
 
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, domain.ErrBookingNotFound
@@ -155,6 +156,7 @@ func (r *BookingRepo) GetByUserID(ctx context.Context, userID int64) (*domain.Bo
 		return nil, err
 	}
 
+	b.ID = strconv.Itoa(id)
 	// Преобразуем DATE обратно в формат DD.MM.YYYY для отображения
 	b.Date = dateVal.Format("02.01.2006")
 	return &b, nil

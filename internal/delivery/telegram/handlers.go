@@ -263,10 +263,42 @@ func (h *Handlers) handleMyBookingBtn(c tele.Context) error {
 
 func (h *Handlers) handleCancelBooking(c tele.Context) error {
 	ctx := context.Background()
-	_ = h.bookingService.CancelBooking(ctx, c.Sender().ID)
-	_ = c.Delete()
+	existing, err := h.bookingService.GetUserBooking(ctx, c.Sender().ID)
+	if err != nil || existing == nil || existing.TimeSlot == "" {
+		_ = c.Respond()
+		_ = c.Delete()
+		return c.Send("У вас пока нет активных записей.", BuildInlineMainMenu(h.webAppBaseURL))
+	}
 
-	// Отвечаем на callback
+	id, err := strconv.Atoi(existing.ID)
+	if err != nil {
+		_ = c.Respond(&tele.CallbackResponse{Text: "Не удалось найти запись", ShowAlert: true})
+		return nil
+	}
+	booking, err := h.bookingService.GetBookingByID(ctx, id)
+	if err != nil {
+		_ = c.Respond(&tele.CallbackResponse{Text: "Не удалось найти запись", ShowAlert: true})
+		return nil
+	}
+
+	if err := h.bookingService.CancelBooking(ctx, c.Sender().ID); err != nil {
+		log.Printf("❌ Ошибка отмены записи userID=%d: %v", c.Sender().ID, err)
+		return c.Respond(&tele.CallbackResponse{Text: "Не удалось отменить запись", ShowAlert: true})
+	}
+
+	if h.adminID != 0 && h.bot != nil {
+		adminText := fmt.Sprintf(
+			"⚠️ <b>Внимание! Клиент отменил запись.</b>\nУслуга: %s\nДата: %s\nВремя: %s\nИмя: %s\nТелефон: <a href='tel:%s'>%s</a>",
+			html.EscapeString(booking.ServiceName),
+			html.EscapeString(booking.Date),
+			html.EscapeString(booking.TimeSlot),
+			html.EscapeString(booking.UserName),
+			booking.Phone, booking.Phone,
+		)
+		_, _ = h.bot.Send(tele.ChatID(h.adminID), adminText, tele.ModeHTML)
+	}
+
+	_ = c.Delete()
 	_ = c.Respond()
 
 	return c.Send("✅ Запись успешно отменена.", BuildInlineMainMenu(h.webAppBaseURL))
