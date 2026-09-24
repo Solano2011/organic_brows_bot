@@ -336,6 +336,11 @@ body {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
+.time-chip.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
 .time-chip.taken {
     background: #EFEFEF !important;
     color: #B0B0B0 !important;

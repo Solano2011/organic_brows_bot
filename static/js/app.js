@@ -24,9 +24,37 @@ if (phoneInput) {
     });
 }
 
+function isTodaySelected() {
+    const now = new Date();
+    const todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    return selectedDate === todayStr;
+}
+
+function isSlotUnavailable(timeStr) {
+    if (!timeStr || !isTodaySelected()) return false;
+    const parts = timeStr.split(':');
+    const slot = new Date();
+    slot.setHours(Number(parts[0]), Number(parts[1]), 0, 0);
+    return slot.getTime() - Date.now() < 15 * 60 * 1000;
+}
+
+function markPastTimeSlots() {
+    document.querySelectorAll('.time-chip').forEach(chip => {
+        const time = chip.innerText.trim();
+        if (isSlotUnavailable(time)) {
+            chip.classList.add('disabled');
+            chip.classList.remove('selected');
+            if (selectedTime === time) selectedTime = '';
+        } else {
+            chip.classList.remove('disabled');
+        }
+    });
+    updateBookingButton();
+}
+
 function updateBookingButton() {
     const phone = phoneInput ? phoneInput.value.trim() : '';
-    if (selectedTime && /^\+7\d{10}$/.test(phone)) {
+    if (selectedTime && !isSlotUnavailable(selectedTime) && /^\+7\d{10}$/.test(phone)) {
         tg.MainButton.show();
     } else {
         tg.MainButton.hide();
@@ -132,12 +160,21 @@ function updateTimeAvailability() {
                 chip.classList.remove('taken', 'selected');
                 if (takenTimes.includes(time)) { chip.classList.add('taken'); }
             });
+            markPastTimeSlots();
         })
-        .catch(err => { console.error("Ошибка получения доступности:", err); });
+        .catch(err => {
+            console.error("Ошибка получения доступности:", err);
+            markPastTimeSlots();
+        });
+    markPastTimeSlots();
 }
 
 function selectTime(time, element) {
-    if (element.classList.contains('taken')) return;
+    if (element.classList.contains('taken') || element.classList.contains('disabled')) return;
+    if (isSlotUnavailable(time)) {
+        tg.showAlert("Это время уже прошло, выберите другое");
+        return;
+    }
     selectedTime = time.trim();
     document.querySelectorAll('.time-chip').forEach(c => c.classList.remove('selected'));
     element.classList.add('selected');
@@ -157,6 +194,7 @@ function submitBooking() {
     const comment = commentEl ? commentEl.value.trim() : "";
     if (!name || !/^\+7\d{10}$/.test(phone)) { tg.showAlert("Пожалуйста, заполните имя и телефон!"); return; }
     if (!selectedTime || !selectedDate) { tg.showAlert("Выберите дату и время!"); return; }
+    if (isSlotUnavailable(selectedTime)) { tg.showAlert("Это время уже прошло, выберите другое"); return; }
     if (!selectedServiceName) { tg.showAlert("Ошибка: услуга не выбрана!"); return; }
     const user = tg.initDataUnsafe?.user;
     if (!user || !user.id) { tg.showAlert("Ошибка: не удалось получить данные пользователя из Telegram!"); return; }
