@@ -285,13 +285,14 @@ body {
 }
 
 .date-chip.selected {
-    background-color: var(--text-main);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
+    border: 2px solid #000000;
+    box-shadow: none;
 }
 
 .date-chip.selected .date-day,
 .date-chip.selected .date-num {
-    color: #ffffff;
+    color: #000000;
 }
 
 /* --- ВЫБОР ВРЕМЕНИ --- */
