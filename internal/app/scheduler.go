@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"strconv"
-	"strings"
 	"time"
 
 	"hookah-bot/internal/delivery/telegram"
@@ -14,14 +13,12 @@ import (
 )
 
 func StartReminderScheduler(b *tele.Bot, svc domain.BookingService) {
-	go func() {
-		ticker := time.NewTicker(5 * time.Minute)
-		defer ticker.Stop()
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+	sendDueReminders(b, svc)
+	for range ticker.C {
 		sendDueReminders(b, svc)
-		for range ticker.C {
-			sendDueReminders(b, svc)
-		}
-	}()
+	}
 }
 
 func sendDueReminders(b *tele.Bot, svc domain.BookingService) {
@@ -32,9 +29,14 @@ func sendDueReminders(b *tele.Bot, svc domain.BookingService) {
 		return
 	}
 
-	now := time.Now()
+	loc, err := time.LoadLocation("Europe/Samara")
+	if err != nil {
+		log.Printf("⚠️ Не удалось загрузить Europe/Samara, используем UTC: %v", err)
+		loc = time.UTC
+	}
+	now := time.Now().In(loc)
 	for _, booking := range bookings {
-		start, err := parseBookingTime(booking.Date, booking.TimeSlot, now.Location())
+		start, err := parseBookingTime(booking.Date, booking.TimeSlot, loc)
 		if err != nil {
 			log.Printf("⚠️ Не удалось разобрать дату записи id=%s: %v", booking.ID, err)
 			continue
@@ -75,17 +77,5 @@ func sendDueReminders(b *tele.Bot, svc domain.BookingService) {
 }
 
 func parseBookingTime(date, slot string, loc *time.Location) (time.Time, error) {
-	day, err := time.ParseInLocation("02.01.2006", date, loc)
-	if err != nil {
-		return time.Time{}, err
-	}
-	clockPart := strings.TrimSpace(slot)
-	if i := strings.Index(clockPart, "-"); i > 0 {
-		clockPart = strings.TrimSpace(clockPart[:i])
-	}
-	clock, err := time.ParseInLocation("15:04", clockPart, loc)
-	if err != nil {
-		return time.Time{}, err
-	}
-	return time.Date(day.Year(), day.Month(), day.Day(), clock.Hour(), clock.Minute(), 0, 0, loc), nil
+	return time.ParseInLocation("02.01.2006 15:04", date+" "+slot, loc)
 }

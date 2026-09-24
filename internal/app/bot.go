@@ -61,7 +61,6 @@ func Run(token string, adminID int64, db *postgres.DB, webAppURL string) {
 	handlers.InitRoutes(b)
 
 	log.Printf("Бот @%s успешно запущен! Admin ID: %d", b.Me.Username, adminID)
-	StartReminderScheduler(b, bookingService)
 
 	// --- ЗАПУСК ВЕБ-СЕРВЕРА ---
 	go func() {
@@ -382,5 +381,6 @@ func Run(token string, adminID int64, db *postgres.DB, webAppURL string) {
 	}()
 	// --------------------------
 
+	go StartReminderScheduler(b, bookingService)
 	b.Start()
 }
