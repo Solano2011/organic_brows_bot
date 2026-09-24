@@ -55,9 +55,10 @@ func Run(token string, adminID int64, db *postgres.DB, webAppURL string) {
 	}
 
 	repo := postgres.NewBookingRepo(db)
+	scheduleRepo := postgres.NewScheduleRepo(db)
 
 	bookingService := service.NewBookingService(repo)
-	handlers := telegram.NewHandlers(bookingService, adminID, b, webAppURL)
+	handlers := telegram.NewHandlers(bookingService, scheduleRepo, adminID, b, webAppURL)
 	handlers.InitRoutes(b)
 
 	log.Printf("Бот @%s успешно запущен! Admin ID: %d", b.Me.Username, adminID)
@@ -330,6 +331,7 @@ func Run(token string, adminID int64, db *postgres.DB, webAppURL string) {
 			}
 
 			date := r.URL.Query().Get("date")
+			serviceName := r.URL.Query().Get("service")
 
 			if date == "" {
 				http.Error(w, "Missing date parameter", http.StatusBadRequest)
@@ -337,15 +339,18 @@ func Run(token string, adminID int64, db *postgres.DB, webAppURL string) {
 			}
 
 			ctx := context.Background()
-			takenSlots, err := repo.GetTakenTimeSlots(ctx, date, "")
+			slots, err := availableSlotsFor(ctx, scheduleRepo, date, serviceName)
 			if err != nil {
-				log.Printf("❌ Ошибка получения занятых слотов для даты %s: %v", date, err)
+				log.Printf("❌ Ошибка расчета слотов для даты %s: %v", date, err)
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
+			if slots == nil {
+				slots = []string{}
+			}
 
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string][]string{"takenSlots": takenSlots})
+			json.NewEncoder(w).Encode(map[string][]string{"slots": slots})
 		})
 		// ---------------------------------------------
 

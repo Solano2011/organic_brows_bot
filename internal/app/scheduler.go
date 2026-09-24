@@ -76,6 +76,31 @@ func sendDueReminders(b *tele.Bot, svc domain.BookingService) {
 	}
 }
 
+func availableSlotsFor(ctx context.Context, store domain.ScheduleStore, date, serviceName string) ([]string, error) {
+	day, err := time.Parse("2006-01-02", date)
+	if err != nil {
+		return nil, err
+	}
+	loc, locErr := time.LoadLocation("Europe/Samara")
+	if locErr != nil {
+		loc = time.UTC
+	}
+	day = time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, loc)
+	schedule, err := store.GetSchedule(ctx, date)
+	if err != nil {
+		return nil, err
+	}
+	settings, err := store.GetSettings(ctx)
+	if err != nil {
+		return nil, err
+	}
+	busy, err := store.ListBusy(ctx, date)
+	if err != nil {
+		return nil, err
+	}
+	return domain.AvailableSlots(day, schedule, settings, domain.ServiceDuration(serviceName), busy, time.Now().In(loc)), nil
+}
+
 func parseBookingTime(date, slot string, loc *time.Location) (time.Time, error) {
 	return time.ParseInLocation("02.01.2006 15:04", date+" "+slot, loc)
 }

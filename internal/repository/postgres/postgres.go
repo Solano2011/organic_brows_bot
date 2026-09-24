@@ -36,6 +36,26 @@ func NewPostgresDB(connString string) (*DB, error) {
 	if _, err := conn.Exec(context.Background(), `
 		ALTER TABLE bookings ADD COLUMN IF NOT EXISTS reminder_24h_sent BOOLEAN DEFAULT FALSE;
 		ALTER TABLE bookings ADD COLUMN IF NOT EXISTS reminder_1h_sent BOOLEAN DEFAULT FALSE;
+		CREATE TABLE IF NOT EXISTS work_schedule (
+			date DATE PRIMARY KEY,
+			is_working_day BOOLEAN NOT NULL DEFAULT TRUE,
+			start_time VARCHAR(5) NOT NULL DEFAULT '10:00',
+			end_time VARCHAR(5) NOT NULL DEFAULT '20:00'
+		);
+		CREATE TABLE IF NOT EXISTS admin_settings (
+			id INT PRIMARY KEY,
+			slot_step_minutes INT NOT NULL DEFAULT 30,
+			min_advance_hours INT NOT NULL DEFAULT 3
+		);
+		INSERT INTO admin_settings (id, slot_step_minutes, min_advance_hours)
+		VALUES (1, 30, 3)
+		ON CONFLICT (id) DO NOTHING;
+		CREATE TABLE IF NOT EXISTS time_blocks (
+			id SERIAL PRIMARY KEY,
+			date DATE NOT NULL,
+			start_time VARCHAR(5) NOT NULL,
+			end_time VARCHAR(5) NOT NULL
+		);
 	`); err != nil {
 		return nil, fmt.Errorf("ошибка миграции напоминаний: %w", err)
 	}

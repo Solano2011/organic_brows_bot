@@ -20,14 +20,16 @@ const (
 
 type Handlers struct {
 	bookingService domain.BookingService
+	schedule       domain.ScheduleStore
 	adminID        int64
 	bot            *tele.Bot
 	webAppBaseURL  string
 }
 
-func NewHandlers(bs domain.BookingService, adminID int64, bot *tele.Bot, webAppURL string) *Handlers {
+func NewHandlers(bs domain.BookingService, schedule domain.ScheduleStore, adminID int64, bot *tele.Bot, webAppURL string) *Handlers {
 	return &Handlers{
 		bookingService: bs,
+		schedule:       schedule,
 		adminID:        adminID,
 		bot:            bot,
 		webAppBaseURL:  webAppURL,
@@ -37,6 +39,9 @@ func NewHandlers(bs domain.BookingService, adminID int64, bot *tele.Bot, webAppU
 func (h *Handlers) InitRoutes(b *tele.Bot) {
 	b.Handle("/start", h.handleStart)
 	b.Handle("/admin", h.handleAdmin)
+	b.Handle("/dayoff", h.handleDayOff)
+	b.Handle("/workday", h.handleWorkDay)
+	b.Handle("/block", h.handleBlockTime)
 
 	b.Handle(&BtnBackToMain, h.handleBackToMain)
 	b.Handle(&BtnMyBooking, h.handleMyBookingBtn)

@@ -153,22 +153,35 @@ function updateTimeAvailability() {
     if (!selectedDate) return;
     const timePicker = document.getElementById('timePicker');
     timePicker.classList.add('active');
-    fetch('/api/availability?date=' + selectedDate)
+    const service = encodeURIComponent(selectedServiceName || '');
+    fetch('/api/availability?date=' + selectedDate + '&service=' + service)
         .then(response => response.json())
         .then(data => {
-            const takenTimes = data.takenSlots || [];
-            document.querySelectorAll('.time-chip').forEach(chip => {
-                const time = chip.innerText.trim();
-                chip.classList.remove('taken', 'selected');
-                if (takenTimes.includes(time)) { chip.classList.add('taken'); }
-            });
-            markPastTimeSlots();
+            renderTimeSlots(data.slots || []);
         })
-        .catch(err => {
-            console.error("Ошибка получения доступности:", err);
-            markPastTimeSlots();
-        });
-    markPastTimeSlots();
+        .catch(err => { console.error("Ошибка получения доступности:", err); });
+}
+
+function renderTimeSlots(slots) {
+    const grid = document.getElementById('timeGrid');
+    if (!grid) return;
+    const previous = selectedTime;
+    grid.innerHTML = '';
+    selectedTime = '';
+    if (!slots.length) {
+        grid.innerHTML = '<div class="time-empty">Нет свободного времени</div>';
+        updateBookingButton();
+        return;
+    }
+    slots.forEach(time => {
+        const chip = document.createElement('div');
+        chip.className = 'time-chip' + (time === previous ? ' selected' : '');
+        chip.textContent = time;
+        chip.onclick = () => selectTime(time, chip);
+        grid.appendChild(chip);
+        if (time === previous) selectedTime = time;
+    });
+    updateBookingButton();
 }
 
 function selectTime(time, element) {
