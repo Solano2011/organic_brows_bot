@@ -101,6 +101,15 @@ func availableSlotsFor(ctx context.Context, store domain.ScheduleStore, date, se
 	return domain.AvailableSlots(day, schedule, settings, domain.ServiceDuration(serviceName), busy, time.Now().In(loc)), nil
 }
 
+func slotIsOpen(slots []string, selected string) bool {
+	for _, slot := range slots {
+		if slot == selected {
+			return true
+		}
+	}
+	return false
+}
+
 func parseBookingTime(date, slot string, loc *time.Location) (time.Time, error) {
 	return time.ParseInLocation("02.01.2006 15:04", date+" "+slot, loc)
 }

@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"time"
 	"unicode/utf8"
 )
 
@@ -57,24 +58,14 @@ func ValidatePhone(phone string) error {
 	return nil
 }
 
-// ValidateTimeSlot проверяет корректность временного слота
+// ValidateTimeSlot проверяет, что слот задан как ЧЧ:ММ.
+// Допустимость относительно графика и длительности услуги проверяется тем же расчётом, что и список в WebApp.
 func ValidateTimeSlot(timeSlot string) error {
-	// Обновлено под beauty bot: слоты с 10:00 до 21:00
-	validSlots := []string{
-		"10:00", "11:00", "12:00", "13:00", "14:00", "15:00",
-		"16:00", "17:00", "18:00", "19:00", "20:00", "21:00",
-	}
-
-	// Убираем лишние пробелы перед проверкой
 	timeSlot = strings.TrimSpace(timeSlot)
-
-	for _, valid := range validSlots {
-		if timeSlot == valid {
-			return nil
-		}
+	if _, err := time.Parse("15:04", timeSlot); err != nil {
+		return fmt.Errorf("некорректный временной слот")
 	}
-
-	return fmt.Errorf("некорректный временной слот")
+	return nil
 }
 
 // ValidateTableName проверяет корректность названия стола

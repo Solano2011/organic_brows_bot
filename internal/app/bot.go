@@ -149,6 +149,16 @@ func Run(token string, adminID int64, db *postgres.DB, webAppURL string) {
 			}
 
 			ctx := context.Background()
+			openSlots, slotErr := availableSlotsFor(ctx, scheduleRepo, data.Date, data.ServiceName)
+			if slotErr != nil {
+				log.Printf("❌ Ошибка проверки слота %s на %s: %v", data.Time, data.Date, slotErr)
+				http.Error(w, "Invalid time slot: некорректный временной слот", http.StatusBadRequest)
+				return
+			}
+			if !slotIsOpen(openSlots, data.Time) {
+				http.Error(w, "Invalid time slot: некорректный временной слот", http.StatusBadRequest)
+				return
+			}
 
 			log.Printf("🌐 [HTTP API] Получен запрос на запись от userID=%d: услуга=%s, дата=%s, время=%s",
 				data.UserID, data.ServiceName, data.Date, data.Time)
