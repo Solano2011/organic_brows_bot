@@ -5,7 +5,7 @@ const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель'
 let view = new Date();
 view.setDate(1);
 let days = {};
-let selectedDate = '';
+let selectedDates = [];
 
 const calendar = document.getElementById('calendar');
 const form = document.getElementById('dayForm');
@@ -30,10 +30,15 @@ async function loadMonth() {
     const month = view.getMonth() + 1;
     document.getElementById('monthTitle').textContent = monthNames[view.getMonth()] + ' ' + year;
     const response = await fetch('/api/admin/schedule?month=' + month + '&year=' + year);
-    const list = await response.json();
+    const data = await response.json();
+    const list = Array.isArray(data) ? data : (data.days || []);
     days = {};
-    (list || []).forEach(item => { days[item.Date] = item; });
+    list.forEach(item => { days[item.Date] = item; });
+    if (data.slotStepMinutes) {
+        document.getElementById('slotStep').value = String(data.slotStepMinutes);
+    }
     renderCalendar();
+    updateSelectionLabel();
 }
 
 function renderCalendar() {
@@ -53,33 +58,53 @@ function renderCalendar() {
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'day-cell ' + (saved && saved.IsWorkingDay === false ? 'dayoff' : 'working');
-        if (key === selectedDate) button.classList.add('selected');
+        if (selectedDates.includes(key)) button.classList.add('selected');
         button.textContent = String(day);
-        button.onclick = () => openDay(key);
+        button.onclick = () => toggleDate(key);
         calendar.appendChild(button);
     }
 }
 
-function openDay(key) {
-    selectedDate = key;
-    const saved = days[key];
-    document.getElementById('selectedDateLabel').textContent = key.split('-').reverse().join('.');
-    workingInput.checked = !saved || saved.IsWorkingDay !== false;
-    document.getElementById('startTime').value = (saved && saved.StartTime) || '10:00';
-    document.getElementById('endTime').value = (saved && saved.EndTime) || '20:00';
-    form.hidden = false;
+function toggleDate(key) {
+    const index = selectedDates.indexOf(key);
+    if (index >= 0) {
+        selectedDates.splice(index, 1);
+    } else {
+        selectedDates.push(key);
+        if (selectedDates.length === 1) {
+            const saved = days[key];
+            workingInput.checked = !saved || saved.IsWorkingDay !== false;
+            document.getElementById('startTime').value = (saved && saved.StartTime) || '10:00';
+            document.getElementById('endTime').value = (saved && saved.EndTime) || '20:00';
+            toggleHours();
+        }
+    }
+    selectedDates.sort();
+    form.hidden = selectedDates.length === 0;
     document.getElementById('saveStatus').textContent = '';
-    toggleHours();
+    updateSelectionLabel();
     renderCalendar();
+}
+
+function updateSelectionLabel() {
+    const label = document.getElementById('selectedDateLabel');
+    if (!selectedDates.length) {
+        label.textContent = 'Выберите дни в календаре';
+        return;
+    }
+    const pretty = selectedDates.map(date => date.split('-').reverse().join('.')).join(', ');
+    label.textContent = 'Выбрано: ' + selectedDates.length + ' — ' + pretty;
 }
 
 async function saveDay(event) {
     event.preventDefault();
+    if (!selectedDates.length) return;
     const payload = {
-        Date: selectedDate,
+        Dates: selectedDates.slice(),
         IsWorkingDay: workingInput.checked,
         StartTime: document.getElementById('startTime').value || '10:00',
-        EndTime: document.getElementById('endTime').value || '20:00'
+        EndTime: document.getElementById('endTime').value || '20:00',
+        SlotStepMinutes: Number(document.getElementById('slotStep').value)
     };
     const response = await fetch('/api/admin/schedule', {
         method: 'POST',
@@ -91,7 +116,14 @@ async function saveDay(event) {
         status.textContent = 'Не удалось сохранить';
         return;
     }
-    days[selectedDate] = payload;
+    payload.Dates.forEach(date => {
+        days[date] = {
+            Date: date,
+            IsWorkingDay: payload.IsWorkingDay,
+            StartTime: payload.StartTime,
+            EndTime: payload.EndTime
+        };
+    });
     status.textContent = 'Сохранено';
     renderCalendar();
 }

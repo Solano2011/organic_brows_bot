@@ -349,29 +349,64 @@ func Run(token string, adminID int64, db *postgres.DB, webAppURL string) {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
+				settings, err := scheduleRepo.GetSettings(ctx)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
 				w.Header().Set("Content-Type", "application/json")
-				json.NewEncoder(w).Encode(items)
+				json.NewEncoder(w).Encode(map[string]any{
+					"days":            items,
+					"slotStepMinutes": settings.SlotStepMinutes,
+				})
 			case http.MethodPost:
-				var item domain.WorkSchedule
-				if err := json.NewDecoder(r.Body).Decode(&item); err != nil {
+				var payload struct {
+					Dates           []string `json:"Dates"`
+					IsWorkingDay    bool     `json:"IsWorkingDay"`
+					StartTime       string   `json:"StartTime"`
+					EndTime         string   `json:"EndTime"`
+					SlotStepMinutes int      `json:"SlotStepMinutes"`
+				}
+				if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 					http.Error(w, "invalid json", http.StatusBadRequest)
 					return
 				}
-				if _, err := time.Parse("2006-01-02", item.Date); err != nil {
-					http.Error(w, "invalid date", http.StatusBadRequest)
+				if len(payload.Dates) == 0 {
+					http.Error(w, "dates are required", http.StatusBadRequest)
 					return
 				}
-				if item.IsWorkingDay {
-					if _, err := time.Parse("15:04", item.StartTime); err != nil {
+				switch payload.SlotStepMinutes {
+				case 15, 30, 90, 120:
+				default:
+					http.Error(w, "invalid slot step", http.StatusBadRequest)
+					return
+				}
+				if payload.IsWorkingDay {
+					if _, err := time.Parse("15:04", payload.StartTime); err != nil {
 						http.Error(w, "invalid start time", http.StatusBadRequest)
 						return
 					}
-					if _, err := time.Parse("15:04", item.EndTime); err != nil {
+					if _, err := time.Parse("15:04", payload.EndTime); err != nil {
 						http.Error(w, "invalid end time", http.StatusBadRequest)
 						return
 					}
 				}
-				if err := scheduleRepo.SaveSchedule(ctx, item); err != nil {
+				for _, date := range payload.Dates {
+					if _, err := time.Parse("2006-01-02", date); err != nil {
+						http.Error(w, "invalid date", http.StatusBadRequest)
+						return
+					}
+					if err := scheduleRepo.SaveSchedule(ctx, domain.WorkSchedule{
+						Date:         date,
+						IsWorkingDay: payload.IsWorkingDay,
+						StartTime:    payload.StartTime,
+						EndTime:      payload.EndTime,
+					}); err != nil {
+						http.Error(w, err.Error(), http.StatusInternalServerError)
+						return
+					}
+				}
+				if err := scheduleRepo.SaveSlotStep(ctx, payload.SlotStepMinutes); err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}

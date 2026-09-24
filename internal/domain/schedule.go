@@ -35,6 +35,7 @@ type ScheduleStore interface {
 	BlockTime(ctx context.Context, date, start, end string) error
 	GetSchedule(ctx context.Context, date string) (*WorkSchedule, error)
 	GetSettings(ctx context.Context) (AdminSettings, error)
+	SaveSlotStep(ctx context.Context, minutes int) error
 	ListBusy(ctx context.Context, date string) ([]BusyInterval, error)
 }
 

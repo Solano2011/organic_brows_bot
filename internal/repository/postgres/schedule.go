@@ -100,6 +100,14 @@ func (r *ScheduleRepo) GetSchedule(ctx context.Context, date string) (*domain.Wo
 	return &item, nil
 }
 
+func (r *ScheduleRepo) SaveSlotStep(ctx context.Context, minutes int) error {
+	_, err := r.db.Conn.Exec(ctx, `
+		INSERT INTO admin_settings (id, slot_step_minutes, min_advance_hours)
+		VALUES (1, $1, 3)
+		ON CONFLICT (id) DO UPDATE SET slot_step_minutes = EXCLUDED.slot_step_minutes`, minutes)
+	return err
+}
+
 func (r *ScheduleRepo) GetSettings(ctx context.Context) (domain.AdminSettings, error) {
 	var settings domain.AdminSettings
 	err := r.db.Conn.QueryRow(ctx, `
