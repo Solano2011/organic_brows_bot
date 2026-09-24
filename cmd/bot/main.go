@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 
 	"hookah-bot/internal/app"
 	"hookah-bot/internal/repository/postgres"
@@ -24,16 +25,7 @@ func main() {
 		log.Fatal("Укажите BOT_TOKEN в переменных окружения")
 	}
 
-	adminIDStr := os.Getenv("ADMIN_ID")
-	var adminID int64
-	if adminIDStr != "" {
-		parsed, err := strconv.ParseInt(adminIDStr, 10, 64)
-		if err != nil {
-			log.Printf("Некорректный ADMIN_ID: %v", err)
-		} else {
-			adminID = parsed
-		}
-	}
+	adminIDs := parseAdminIDs(os.Getenv("ADMIN_IDS"))
 
 	webAppURL := getEnvOrDefault("WEBAPP_URL", "https://beauty-bot.example.com")
 
@@ -59,7 +51,24 @@ func main() {
 	defer db.Conn.Close(context.Background())
 
 	// Передаем db и webAppURL внутрь app.Run
-	app.Run(token, adminID, db, webAppURL)
+	app.Run(token, adminIDs, db, webAppURL)
+}
+
+func parseAdminIDs(raw string) []int64 {
+	var ids []int64
+	for _, part := range strings.Split(raw, ",") {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		id, err := strconv.ParseInt(part, 10, 64)
+		if err != nil || id == 0 {
+			log.Printf("Некорректный ADMIN_IDS: %q", part)
+			continue
+		}
+		ids = append(ids, id)
+	}
+	return ids
 }
 
 func getEnvOrDefault(key, defaultValue string) string {
