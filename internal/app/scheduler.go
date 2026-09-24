@@ -98,6 +98,7 @@ func availableSlotsFor(ctx context.Context, store domain.ScheduleStore, date, se
 	if err != nil {
 		return nil, err
 	}
+	// ListBusy уже объединяет подтверждённые записи и перерывы из time_blocks.
 	return domain.AvailableSlots(day, schedule, settings, domain.ServiceDuration(serviceName), busy, time.Now().In(loc)), nil
 }
 

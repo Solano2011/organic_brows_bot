@@ -5,6 +5,7 @@ const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель'
 let view = new Date();
 view.setDate(1);
 let days = {};
+let breaksByDate = {};
 let selectedDates = [];
 
 const calendar = document.getElementById('calendar');
@@ -16,6 +17,7 @@ document.getElementById('prevMonth').onclick = () => { view.setMonth(view.getMon
 document.getElementById('nextMonth').onclick = () => { view.setMonth(view.getMonth() + 1); loadMonth(); };
 workingInput.onchange = toggleHours;
 form.onsubmit = saveDay;
+document.getElementById('addBreak').onclick = () => addBreakRow('13:00', '14:00');
 
 function toggleHours() {
     hoursFields.hidden = !workingInput.checked;
@@ -34,6 +36,7 @@ async function loadMonth() {
     const list = Array.isArray(data) ? data : (data.days || []);
     days = {};
     list.forEach(item => { days[item.Date] = item; });
+    breaksByDate = data.breaks || {};
     if (data.slotStepMinutes) {
         document.getElementById('slotStep').value = String(data.slotStepMinutes);
     }
@@ -76,10 +79,12 @@ function toggleDate(key) {
             workingInput.checked = !saved || saved.IsWorkingDay !== false;
             document.getElementById('startTime').value = (saved && saved.StartTime) || '10:00';
             document.getElementById('endTime').value = (saved && saved.EndTime) || '20:00';
+            setBreaks(breaksByDate[key] || []);
             toggleHours();
         }
     }
     selectedDates.sort();
+    if (!selectedDates.length) setBreaks([]);
     form.hidden = selectedDates.length === 0;
     document.getElementById('saveStatus').textContent = '';
     updateSelectionLabel();
@@ -104,7 +109,8 @@ async function saveDay(event) {
         IsWorkingDay: workingInput.checked,
         StartTime: document.getElementById('startTime').value || '10:00',
         EndTime: document.getElementById('endTime').value || '20:00',
-        SlotStepMinutes: Number(document.getElementById('slotStep').value)
+        SlotStepMinutes: Number(document.getElementById('slotStep').value),
+        breaks: collectBreaks()
     };
     const response = await fetch('/api/admin/schedule', {
         method: 'POST',
@@ -123,9 +129,44 @@ async function saveDay(event) {
             StartTime: payload.StartTime,
             EndTime: payload.EndTime
         };
+        breaksByDate[date] = payload.breaks.slice();
     });
     status.textContent = 'Сохранено';
     renderCalendar();
+}
+
+function addBreakRow(start, end) {
+    const row = document.createElement('div');
+    row.className = 'break-row';
+    const startInput = document.createElement('input');
+    startInput.type = 'time';
+    startInput.className = 'input-field break-start';
+    startInput.value = start || '13:00';
+    const endInput = document.createElement('input');
+    endInput.type = 'time';
+    endInput.className = 'input-field break-end';
+    endInput.value = end || '14:00';
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'break-remove';
+    remove.textContent = '✕';
+    remove.setAttribute('aria-label', 'Удалить перерыв');
+    remove.onclick = () => row.remove();
+    row.append(startInput, endInput, remove);
+    document.getElementById('breaksList').appendChild(row);
+}
+
+function setBreaks(list) {
+    const box = document.getElementById('breaksList');
+    box.innerHTML = '';
+    (list || []).forEach(item => addBreakRow(item.startTime || item.Start, item.endTime || item.End));
+}
+
+function collectBreaks() {
+    return Array.from(document.querySelectorAll('.break-row')).map(row => ({
+        startTime: row.querySelector('.break-start').value,
+        endTime: row.querySelector('.break-end').value
+    })).filter(item => item.startTime && item.endTime);
 }
 
 loadMonth();

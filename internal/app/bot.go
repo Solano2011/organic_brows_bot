@@ -354,10 +354,16 @@ func Run(token string, adminID int64, db *postgres.DB, webAppURL string) {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
+				blocks, err := scheduleRepo.ListBlocksMonth(ctx, year, month)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
 				w.Header().Set("Content-Type", "application/json")
 				json.NewEncoder(w).Encode(map[string]any{
 					"days":            items,
 					"slotStepMinutes": settings.SlotStepMinutes,
+					"breaks":          breaksPayload(blocks),
 				})
 			case http.MethodPost:
 				var payload struct {
@@ -366,6 +372,10 @@ func Run(token string, adminID int64, db *postgres.DB, webAppURL string) {
 					StartTime       string   `json:"StartTime"`
 					EndTime         string   `json:"EndTime"`
 					SlotStepMinutes int      `json:"SlotStepMinutes"`
+					Breaks          []struct {
+						StartTime string `json:"startTime"`
+						EndTime   string `json:"endTime"`
+					} `json:"breaks"`
 				}
 				if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 					http.Error(w, "invalid json", http.StatusBadRequest)
@@ -376,7 +386,7 @@ func Run(token string, adminID int64, db *postgres.DB, webAppURL string) {
 					return
 				}
 				switch payload.SlotStepMinutes {
-				case 15, 30, 90, 120:
+				case 15, 30, 60, 90, 120:
 				default:
 					http.Error(w, "invalid slot step", http.StatusBadRequest)
 					return
@@ -391,6 +401,22 @@ func Run(token string, adminID int64, db *postgres.DB, webAppURL string) {
 						return
 					}
 				}
+				var breaks []domain.BusyInterval
+				for _, item := range payload.Breaks {
+					start, okStart := normalizeClock(item.StartTime)
+					end, okEnd := normalizeClock(item.EndTime)
+					if !okStart || !okEnd {
+						http.Error(w, "invalid break", http.StatusBadRequest)
+						return
+					}
+					startMin, _ := domain.ClockMinutes(start)
+					endMin, _ := domain.ClockMinutes(end)
+					if endMin <= startMin {
+						http.Error(w, "invalid break", http.StatusBadRequest)
+						return
+					}
+					breaks = append(breaks, domain.BusyInterval{Start: start, End: end})
+				}
 				for _, date := range payload.Dates {
 					if _, err := time.Parse("2006-01-02", date); err != nil {
 						http.Error(w, "invalid date", http.StatusBadRequest)
@@ -402,6 +428,10 @@ func Run(token string, adminID int64, db *postgres.DB, webAppURL string) {
 						StartTime:    payload.StartTime,
 						EndTime:      payload.EndTime,
 					}); err != nil {
+						http.Error(w, err.Error(), http.StatusInternalServerError)
+						return
+					}
+					if err := scheduleRepo.ReplaceBlocks(ctx, date, breaks); err != nil {
 						http.Error(w, err.Error(), http.StatusInternalServerError)
 						return
 					}
@@ -502,4 +532,29 @@ func Run(token string, adminID int64, db *postgres.DB, webAppURL string) {
 
 	go StartReminderScheduler(b, bookingService)
 	b.Start()
+}
+
+func normalizeClock(value string) (string, bool) {
+	if len(value) >= 5 {
+		value = value[:5]
+	}
+	if _, ok := domain.ClockMinutes(value); !ok {
+		return "", false
+	}
+	return value, true
+}
+
+func breaksPayload(blocks map[string][]domain.BusyInterval) map[string][]map[string]string {
+	out := map[string][]map[string]string{}
+	for date, items := range blocks {
+		list := make([]map[string]string, 0, len(items))
+		for _, item := range items {
+			list = append(list, map[string]string{
+				"startTime": item.Start,
+				"endTime":   item.End,
+			})
+		}
+		out[date] = list
+	}
+	return out
 }

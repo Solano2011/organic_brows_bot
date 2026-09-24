@@ -37,6 +37,8 @@ type ScheduleStore interface {
 	GetSettings(ctx context.Context) (AdminSettings, error)
 	SaveSlotStep(ctx context.Context, minutes int) error
 	ListBusy(ctx context.Context, date string) ([]BusyInterval, error)
+	ReplaceBlocks(ctx context.Context, date string, blocks []BusyInterval) error
+	ListBlocksMonth(ctx context.Context, year, month int) (map[string][]BusyInterval, error)
 }
 
 var serviceDurations = map[string]int{

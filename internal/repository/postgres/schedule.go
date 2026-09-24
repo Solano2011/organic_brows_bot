@@ -162,3 +162,47 @@ func (r *ScheduleRepo) ListBusy(ctx context.Context, date string) ([]domain.Busy
 	}
 	return busy, blocks.Err()
 }
+
+func (r *ScheduleRepo) ReplaceBlocks(ctx context.Context, date string, blocks []domain.BusyInterval) error {
+	tx, err := r.db.Conn.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	if _, err := tx.Exec(ctx, `DELETE FROM time_blocks WHERE date = $1::date`, date); err != nil {
+		return err
+	}
+	for _, block := range blocks {
+		if _, err := tx.Exec(ctx, `
+			INSERT INTO time_blocks (date, start_time, end_time) VALUES ($1::date, $2, $3)`,
+			date, block.Start, block.End); err != nil {
+			return err
+		}
+	}
+	return tx.Commit(ctx)
+}
+
+func (r *ScheduleRepo) ListBlocksMonth(ctx context.Context, year, month int) (map[string][]domain.BusyInterval, error) {
+	rows, err := r.db.Conn.Query(ctx, `
+		SELECT to_char(date, 'YYYY-MM-DD'), start_time, end_time
+		FROM time_blocks
+		WHERE date >= make_date($1, $2, 1)
+		  AND date < (make_date($1, $2, 1) + INTERVAL '1 month')
+		ORDER BY date, start_time`, year, month)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := map[string][]domain.BusyInterval{}
+	for rows.Next() {
+		var date string
+		var item domain.BusyInterval
+		if err := rows.Scan(&date, &item.Start, &item.End); err != nil {
+			return nil, err
+		}
+		out[date] = append(out[date], item)
+	}
+	return out, rows.Err()
+}
