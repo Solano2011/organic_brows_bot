@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html"
 	"html/template"
 	"log"
 	"net/http"
@@ -239,24 +240,24 @@ func Run(token string, adminID int64, db *postgres.DB, webAppURL string) {
 			// Уведомляем админа
 			if adminID != 0 {
 				adminText := fmt.Sprintf(
-					"🔔 *НОВАЯ ЗАПИСЬ*\n"+
+					"🔔 <b>НОВАЯ ЗАПИСЬ</b>\n"+
 						"━━━━━━━━━━━━━━━\n"+
-						"*Имя:* %s\n"+
-						"*Телефон:* %s\n"+
-						"ID: `%d`\n"+
-						"Услуга: *%s*\n"+
-						"Дата: *%s*\n"+
-						"Время: *%s*\n",
-					booking.UserName, booking.Phone, booking.UserID,
-					booking.ServiceName, booking.Date, booking.TimeSlot,
+						"<b>Имя:</b> %s\n"+
+						"<b>Телефон:</b> <a href='tel:%s'>%s</a>\n"+
+						"ID: <code>%d</code>\n"+
+						"Услуга: <b>%s</b>\n"+
+						"Дата: <b>%s</b>\n"+
+						"Время: <b>%s</b>\n",
+					html.EscapeString(booking.UserName), booking.Phone, booking.Phone, booking.UserID,
+					html.EscapeString(booking.ServiceName), html.EscapeString(booking.Date), html.EscapeString(booking.TimeSlot),
 				)
 
 				if booking.Comment != "" {
-					adminText += fmt.Sprintf("Комментарий: *%s*\n", booking.Comment)
+					adminText += fmt.Sprintf("Комментарий: <b>%s</b>\n", html.EscapeString(booking.Comment))
 				}
 
 				admin := &tele.User{ID: adminID}
-				_, adminErr := b.Send(admin, adminText, tele.ModeMarkdown)
+				_, adminErr := b.Send(admin, adminText, tele.ModeHTML)
 				if adminErr != nil {
 					log.Printf("⚠️ Ошибка при отправке уведомления админу: %v", adminErr)
 				}

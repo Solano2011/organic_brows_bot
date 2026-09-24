@@ -197,18 +197,19 @@ func (h *Handlers) handleWebApp(c tele.Context) error {
 			usernameStr = "без username"
 		}
 		notifyText := fmt.Sprintf(
-			"🔔 *НОВАЯ ЗАПИСЬ В СИСТЕМЕ*\n"+
+			"🔔 <b>НОВАЯ ЗАПИСЬ В СИСТЕМЕ</b>\n"+
 				"━━━━━━━━━━━━━━━\n"+
-				"*Имя:* %s\n"+
-				"*Телефон:* %s\n"+
+				"<b>Имя:</b> %s\n"+
+				"<b>Телефон:</b> <a href='tel:%s'>%s</a>\n"+
 				"Гость: %s\n"+
-				"*Услуга:* %s\n"+
-				"*Дата:* %s\n"+
-				"*Время:* %s\n"+
-				"*Комментарий:* %s",
-			booking.UserName, booking.Phone, usernameStr, booking.ServiceName, booking.Date, booking.TimeSlot, booking.Comment,
+				"<b>Услуга:</b> %s\n"+
+				"<b>Дата:</b> %s\n"+
+				"<b>Время:</b> %s\n"+
+				"<b>Комментарий:</b> %s",
+			html.EscapeString(booking.UserName), booking.Phone, booking.Phone, html.EscapeString(usernameStr),
+			html.EscapeString(booking.ServiceName), html.EscapeString(booking.Date), html.EscapeString(booking.TimeSlot), html.EscapeString(booking.Comment),
 		)
-		go func(msg string) { _, _ = h.bot.Send(tele.ChatID(h.adminID), msg, tele.ModeMarkdown) }(notifyText)
+		go func(msg string) { _, _ = h.bot.Send(tele.ChatID(h.adminID), msg, tele.ModeHTML) }(notifyText)
 	}
 
 	// Подтверждаем пользователю

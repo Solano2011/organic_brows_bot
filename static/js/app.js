@@ -12,6 +12,27 @@ tg.MainButton.hide();
 
 tg.MainButton.onClick(submitBooking);
 
+const phoneInput = document.getElementById('userPhone');
+if (phoneInput) {
+    phoneInput.addEventListener('input', () => {
+        let digits = phoneInput.value.replace(/\D/g, '');
+        if (digits.startsWith('7')) {
+            digits = digits.slice(1);
+        }
+        phoneInput.value = '+7' + digits.slice(0, 10);
+        updateBookingButton();
+    });
+}
+
+function updateBookingButton() {
+    const phone = phoneInput ? phoneInput.value.trim() : '';
+    if (selectedTime && /^\+7\d{10}$/.test(phone)) {
+        tg.MainButton.show();
+    } else {
+        tg.MainButton.hide();
+    }
+}
+
 window.onload = function() {
     const urlParams = new URLSearchParams(window.location.search);
     selectedServiceName = urlParams.get('service');
@@ -54,7 +75,7 @@ function backToMenu() {
     document.querySelectorAll('.time-chip').forEach(c => c.classList.remove('selected'));
     document.getElementById('dateScroll').innerHTML = '';
     document.getElementById('userName').value = '';
-    document.getElementById('userPhone').value = '';
+    document.getElementById('userPhone').value = '+7';
     document.getElementById('userComment').value = '';
     tg.MainButton.hide();
     document.getElementById('serviceSelector').classList.add('active');
@@ -123,7 +144,7 @@ function selectTime(time, element) {
     const contactForm = document.getElementById('contactForm');
     contactForm.style.display = 'block';
     contactForm.classList.add('active');
-    tg.MainButton.show();
+    updateBookingButton();
     setTimeout(() => { contactForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 150);
 }
 
@@ -134,7 +155,7 @@ function submitBooking() {
     const name = nameEl ? nameEl.value.trim() : "";
     const phone = phoneEl ? phoneEl.value.trim() : "";
     const comment = commentEl ? commentEl.value.trim() : "";
-    if (!name || !phone) { tg.showAlert("Пожалуйста, заполните имя и телефон!"); return; }
+    if (!name || !/^\+7\d{10}$/.test(phone)) { tg.showAlert("Пожалуйста, заполните имя и телефон!"); return; }
     if (!selectedTime || !selectedDate) { tg.showAlert("Выберите дату и время!"); return; }
     if (!selectedServiceName) { tg.showAlert("Ошибка: услуга не выбрана!"); return; }
     const user = tg.initDataUnsafe?.user;
