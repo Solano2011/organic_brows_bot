@@ -24,7 +24,7 @@ import (
 )
 
 // Добавили db *postgres.DB третьим параметром и webAppURL четвертым
-func Run(token string, adminID int64, db *postgres.DB, webAppURL string) {
+func Run(token string, adminIDs []int64, db *postgres.DB, webAppURL string) {
 	pref := tele.Settings{
 		Token:  token,
 		Poller: &tele.LongPoller{Timeout: 10 * time.Second},
@@ -61,10 +61,10 @@ func Run(token string, adminID int64, db *postgres.DB, webAppURL string) {
 	scheduleRepo := postgres.NewScheduleRepo(db)
 
 	bookingService := service.NewBookingService(repo)
-	handlers := telegram.NewHandlers(bookingService, scheduleRepo, adminID, b, webAppURL)
+	handlers := telegram.NewHandlers(bookingService, scheduleRepo, adminIDs, b, webAppURL)
 	handlers.InitRoutes(b)
 
-	log.Printf("Бот @%s успешно запущен! Admin ID: %d", b.Me.Username, adminID)
+	log.Printf("Бот @%s успешно запущен! Admin IDs: %v", b.Me.Username, adminIDs)
 
 	// --- ЗАПУСК ВЕБ-СЕРВЕРА ---
 	go func() {
@@ -250,29 +250,29 @@ func Run(token string, adminID int64, db *postgres.DB, webAppURL string) {
 				log.Printf("⚠️ Ошибка при отправке сообщения: %v", err)
 			}
 
-			// Уведомляем админа
-			if adminID != 0 {
-				adminText := fmt.Sprintf(
-					"🔔 <b>НОВАЯ ЗАПИСЬ</b>\n"+
-						"━━━━━━━━━━━━━━━\n"+
-						"<b>Имя:</b> %s\n"+
-						"<b>Телефон:</b> <a href='tel:%s'>%s</a>\n"+
-						"ID: <code>%d</code>\n"+
-						"Услуга: <b>%s</b>\n"+
-						"Дата: <b>%s</b>\n"+
-						"Время: <b>%s</b>\n",
-					html.EscapeString(booking.UserName), booking.Phone, booking.Phone, booking.UserID,
-					html.EscapeString(booking.ServiceName), html.EscapeString(booking.Date), html.EscapeString(booking.TimeSlot),
-				)
+			adminText := fmt.Sprintf(
+				"🔔 <b>НОВАЯ ЗАПИСЬ</b>\n"+
+					"━━━━━━━━━━━━━━━\n"+
+					"<b>Имя:</b> %s\n"+
+					"<b>Телефон:</b> <a href='tel:%s'>%s</a>\n"+
+					"ID: <code>%d</code>\n"+
+					"Услуга: <b>%s</b>\n"+
+					"Дата: <b>%s</b>\n"+
+					"Время: <b>%s</b>\n",
+				html.EscapeString(booking.UserName), booking.Phone, booking.Phone, booking.UserID,
+				html.EscapeString(booking.ServiceName), html.EscapeString(booking.Date), html.EscapeString(booking.TimeSlot),
+			)
 
-				if booking.Comment != "" {
-					adminText += fmt.Sprintf("Комментарий: <b>%s</b>\n", html.EscapeString(booking.Comment))
+			if booking.Comment != "" {
+				adminText += fmt.Sprintf("Комментарий: <b>%s</b>\n", html.EscapeString(booking.Comment))
+			}
+
+			for _, id := range adminIDs {
+				if id == 0 {
+					continue
 				}
-
-				admin := &tele.User{ID: adminID}
-				_, adminErr := b.Send(admin, adminText, tele.ModeHTML)
-				if adminErr != nil {
-					log.Printf("⚠️ Ошибка при отправке уведомления админу: %v", adminErr)
+				if _, adminErr := b.Send(&tele.User{ID: id}, adminText, tele.ModeHTML); adminErr != nil {
+					log.Printf("⚠️ Ошибка при отправке уведомления админу %d: %v", id, adminErr)
 				}
 			}
 

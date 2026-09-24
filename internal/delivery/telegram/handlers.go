@@ -21,16 +21,16 @@ const (
 type Handlers struct {
 	bookingService domain.BookingService
 	schedule       domain.ScheduleStore
-	adminID        int64
+	adminIDs       []int64
 	bot            *tele.Bot
 	webAppBaseURL  string
 }
 
-func NewHandlers(bs domain.BookingService, schedule domain.ScheduleStore, adminID int64, bot *tele.Bot, webAppURL string) *Handlers {
+func NewHandlers(bs domain.BookingService, schedule domain.ScheduleStore, adminIDs []int64, bot *tele.Bot, webAppURL string) *Handlers {
 	return &Handlers{
 		bookingService: bs,
 		schedule:       schedule,
-		adminID:        adminID,
+		adminIDs:       adminIDs,
 		bot:            bot,
 		webAppBaseURL:  webAppURL,
 	}
@@ -67,7 +67,26 @@ func (h *Handlers) InitRoutes(b *tele.Bot) {
 }
 
 func (h *Handlers) isAdmin(userID int64) bool {
-	return h.adminID != 0 && userID == h.adminID
+	for _, id := range h.adminIDs {
+		if id != 0 && id == userID {
+			return true
+		}
+	}
+	return false
+}
+
+func (h *Handlers) notifyAdmins(text string) {
+	if h.bot == nil {
+		return
+	}
+	for _, id := range h.adminIDs {
+		if id == 0 {
+			continue
+		}
+		if _, err := h.bot.Send(tele.ChatID(id), text, tele.ModeHTML); err != nil {
+			log.Printf("⚠️ Не удалось отправить уведомление админу %d: %v", id, err)
+		}
+	}
 }
 
 func (h *Handlers) handleStart(c tele.Context) error {
@@ -195,28 +214,24 @@ func (h *Handlers) handleWebApp(c tele.Context) error {
 	// Удаляем сообщение с кнопкой Web App
 	_ = h.bot.Delete(c.Message())
 
-	// Уведомляем админа
-	if h.adminID != 0 && h.bot != nil {
-		user := c.Sender()
-		usernameStr := "@" + user.Username
-		if user.Username == "" {
-			usernameStr = "без username"
-		}
-		notifyText := fmt.Sprintf(
-			"🔔 <b>НОВАЯ ЗАПИСЬ В СИСТЕМЕ</b>\n"+
-				"━━━━━━━━━━━━━━━\n"+
-				"<b>Имя:</b> %s\n"+
-				"<b>Телефон:</b> <a href='tel:%s'>%s</a>\n"+
-				"Гость: %s\n"+
-				"<b>Услуга:</b> %s\n"+
-				"<b>Дата:</b> %s\n"+
-				"<b>Время:</b> %s\n"+
-				"<b>Комментарий:</b> %s",
-			html.EscapeString(booking.UserName), booking.Phone, booking.Phone, html.EscapeString(usernameStr),
-			html.EscapeString(booking.ServiceName), html.EscapeString(booking.Date), html.EscapeString(booking.TimeSlot), html.EscapeString(booking.Comment),
-		)
-		go func(msg string) { _, _ = h.bot.Send(tele.ChatID(h.adminID), msg, tele.ModeHTML) }(notifyText)
+	user := c.Sender()
+	usernameStr := "@" + user.Username
+	if user.Username == "" {
+		usernameStr = "без username"
 	}
+	h.notifyAdmins(fmt.Sprintf(
+		"🔔 <b>НОВАЯ ЗАПИСЬ В СИСТЕМЕ</b>\n"+
+			"━━━━━━━━━━━━━━━\n"+
+			"<b>Имя:</b> %s\n"+
+			"<b>Телефон:</b> <a href='tel:%s'>%s</a>\n"+
+			"Гость: %s\n"+
+			"<b>Услуга:</b> %s\n"+
+			"<b>Дата:</b> %s\n"+
+			"<b>Время:</b> %s\n"+
+			"<b>Комментарий:</b> %s",
+		html.EscapeString(booking.UserName), booking.Phone, booking.Phone, html.EscapeString(usernameStr),
+		html.EscapeString(booking.ServiceName), html.EscapeString(booking.Date), html.EscapeString(booking.TimeSlot), html.EscapeString(booking.Comment),
+	))
 
 	// Подтверждаем пользователю
 	text := FormatClientBooking(booking.ServiceName, booking.Date, booking.TimeSlot)
@@ -303,17 +318,14 @@ func (h *Handlers) handleCancelBooking(c tele.Context) error {
 		return c.Respond(&tele.CallbackResponse{Text: "Не удалось отменить запись", ShowAlert: true})
 	}
 
-	if h.adminID != 0 && h.bot != nil {
-		adminText := fmt.Sprintf(
-			"⚠️ <b>Внимание! Клиент отменил запись.</b>\nУслуга: %s\nДата: %s\nВремя: %s\nИмя: %s\nТелефон: <a href='tel:%s'>%s</a>",
-			html.EscapeString(booking.ServiceName),
-			html.EscapeString(booking.Date),
-			html.EscapeString(booking.TimeSlot),
-			html.EscapeString(booking.UserName),
-			booking.Phone, booking.Phone,
-		)
-		_, _ = h.bot.Send(tele.ChatID(h.adminID), adminText, tele.ModeHTML)
-	}
+	h.notifyAdmins(fmt.Sprintf(
+		"⚠️ <b>Внимание! Клиент отменил запись.</b>\nУслуга: %s\nДата: %s\nВремя: %s\nИмя: %s\nТелефон: <a href='tel:%s'>%s</a>",
+		html.EscapeString(booking.ServiceName),
+		html.EscapeString(booking.Date),
+		html.EscapeString(booking.TimeSlot),
+		html.EscapeString(booking.UserName),
+		booking.Phone, booking.Phone,
+	))
 
 	_ = c.Delete()
 	_ = c.Respond()
@@ -422,16 +434,13 @@ func (h *Handlers) handleConfirmReminder(c tele.Context) error {
 	if _, err := h.bot.EditReplyMarkup(c.Callback(), &tele.ReplyMarkup{}); err != nil {
 		log.Printf("⚠️ Не удалось убрать кнопки напоминания id=%d: %v", id, err)
 	}
-	if h.adminID != 0 {
-		adminText := fmt.Sprintf(
-			"🔔 Клиент подтвердил запись!\nУслуга: %s\nДата: %s\nВремя: %s\nТелефон: %s",
-			html.EscapeString(booking.ServiceName),
-			html.EscapeString(booking.Date),
-			html.EscapeString(booking.TimeSlot),
-			html.EscapeString(booking.Phone),
-		)
-		_, _ = h.bot.Send(tele.ChatID(h.adminID), adminText, tele.ModeHTML)
-	}
+	h.notifyAdmins(fmt.Sprintf(
+		"🔔 Клиент подтвердил запись!\nУслуга: %s\nДата: %s\nВремя: %s\nТелефон: %s",
+		html.EscapeString(booking.ServiceName),
+		html.EscapeString(booking.Date),
+		html.EscapeString(booking.TimeSlot),
+		html.EscapeString(booking.Phone),
+	))
 	_ = c.Respond()
 	return c.Send("✅ Спасибо, мы ждем вас!")
 }
@@ -448,16 +457,13 @@ func (h *Handlers) handleCancelReminder(c tele.Context) error {
 	if _, err := h.bot.EditReplyMarkup(c.Callback(), &tele.ReplyMarkup{}); err != nil {
 		log.Printf("⚠️ Не удалось убрать кнопки напоминания id=%d: %v", id, err)
 	}
-	if h.adminID != 0 {
-		adminText := fmt.Sprintf(
-			"⚠️ Внимание! Клиент ОТМЕНИЛ запись!\nУслуга: %s\nДата: %s\nВремя: %s\nТелефон: %s",
-			html.EscapeString(booking.ServiceName),
-			html.EscapeString(booking.Date),
-			html.EscapeString(booking.TimeSlot),
-			html.EscapeString(booking.Phone),
-		)
-		_, _ = h.bot.Send(tele.ChatID(h.adminID), adminText, tele.ModeHTML)
-	}
+	h.notifyAdmins(fmt.Sprintf(
+		"⚠️ Внимание! Клиент ОТМЕНИЛ запись!\nУслуга: %s\nДата: %s\nВремя: %s\nТелефон: %s",
+		html.EscapeString(booking.ServiceName),
+		html.EscapeString(booking.Date),
+		html.EscapeString(booking.TimeSlot),
+		html.EscapeString(booking.Phone),
+	))
 	_ = c.Respond()
 	return c.Send("❌ Ваша запись отменена.")
 }
