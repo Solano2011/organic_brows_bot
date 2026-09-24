@@ -209,8 +209,8 @@ body {
 }
 
 .service-title {
-    font-size: 28px;
-    font-weight: 700;
+    font-size: 20px;
+    font-weight: 500;
     color: #000000 !important;
     margin-bottom: 8px;
     letter-spacing: -0.5px;
@@ -271,12 +271,12 @@ body {
 .date-chip .date-day {
     font-size: 12px;
     color: var(--text-muted);
-    font-weight: 600;
+    font-weight: 500;
 }
 
 .date-chip .date-num {
-    font-size: 18px;
-    font-weight: 700;
+    font-size: 15px;
+    font-weight: 500;
     color: var(--text-main);
     /* Добавляем эти 3 строчки, чтобы принудительно переносить текст: */
     width: min-content;
