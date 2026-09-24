@@ -33,6 +33,13 @@ func NewPostgresDB(connString string) (*DB, error) {
 		return nil, fmt.Errorf("ошибка миграций: %w", err)
 	}
 
+	if _, err := conn.Exec(context.Background(), `
+		ALTER TABLE bookings ADD COLUMN IF NOT EXISTS reminder_24h_sent BOOLEAN DEFAULT FALSE;
+		ALTER TABLE bookings ADD COLUMN IF NOT EXISTS reminder_1h_sent BOOLEAN DEFAULT FALSE;
+	`); err != nil {
+		return nil, fmt.Errorf("ошибка миграции напоминаний: %w", err)
+	}
+
 	log.Println("✅ Подключение к БД успешно, миграции применены!")
 	return db, nil
 }

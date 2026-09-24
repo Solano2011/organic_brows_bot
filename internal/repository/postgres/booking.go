@@ -215,7 +215,8 @@ func (r *BookingRepo) DeleteDraft(ctx context.Context, userID int64) error {
 
 func (r *BookingRepo) GetAllActive(ctx context.Context) ([]domain.Booking, error) {
 	rows, err := r.db.Conn.Query(ctx, `
-        SELECT id, user_id, service_name, time_slot, date, COALESCE(user_name, ''), COALESCE(phone, ''), COALESCE(comment, ''), created_at
+        SELECT id, user_id, service_name, time_slot, date, COALESCE(user_name, ''), COALESCE(phone, ''), COALESCE(comment, ''), created_at,
+               COALESCE(reminder_24h_sent, FALSE), COALESCE(reminder_1h_sent, FALSE)
         FROM bookings
         WHERE status = 'confirmed'
         ORDER BY created_at DESC`,
@@ -230,7 +231,7 @@ func (r *BookingRepo) GetAllActive(ctx context.Context) ([]domain.Booking, error
 		var b domain.Booking
 		var id int
 		var dateVal time.Time
-		if err := rows.Scan(&id, &b.UserID, &b.ServiceName, &b.TimeSlot, &dateVal, &b.UserName, &b.Phone, &b.Comment, &b.CreatedAt); err != nil {
+		if err := rows.Scan(&id, &b.UserID, &b.ServiceName, &b.TimeSlot, &dateVal, &b.UserName, &b.Phone, &b.Comment, &b.CreatedAt, &b.Reminder24hSent, &b.Reminder1hSent); err != nil {
 			return nil, err
 		}
 		b.ID = strconv.Itoa(id)
@@ -242,6 +243,36 @@ func (r *BookingRepo) GetAllActive(ctx context.Context) ([]domain.Booking, error
 
 func (r *BookingRepo) DeleteBookingByID(ctx context.Context, id int) error {
 	_, err := r.db.Conn.Exec(ctx, `DELETE FROM bookings WHERE id = $1`, id)
+	return err
+}
+
+func (r *BookingRepo) GetByID(ctx context.Context, id int) (*domain.Booking, error) {
+	var b domain.Booking
+	var rowID int
+	var dateVal time.Time
+	err := r.db.Conn.QueryRow(ctx, `
+        SELECT id, user_id, service_name, time_slot, date, COALESCE(user_name, ''), COALESCE(phone, ''), COALESCE(comment, ''), created_at,
+               COALESCE(reminder_24h_sent, FALSE), COALESCE(reminder_1h_sent, FALSE)
+        FROM bookings
+        WHERE id = $1`, id,
+	).Scan(&rowID, &b.UserID, &b.ServiceName, &b.TimeSlot, &dateVal, &b.UserName, &b.Phone, &b.Comment, &b.CreatedAt, &b.Reminder24hSent, &b.Reminder1hSent)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, domain.ErrBookingNotFound
+	} else if err != nil {
+		return nil, err
+	}
+	b.ID = strconv.Itoa(rowID)
+	b.Date = dateVal.Format("02.01.2006")
+	return &b, nil
+}
+
+func (r *BookingRepo) MarkReminder24hSent(ctx context.Context, id int) error {
+	_, err := r.db.Conn.Exec(ctx, `UPDATE bookings SET reminder_24h_sent = TRUE WHERE id = $1`, id)
+	return err
+}
+
+func (r *BookingRepo) MarkReminder1hSent(ctx context.Context, id int) error {
+	_, err := r.db.Conn.Exec(ctx, `UPDATE bookings SET reminder_1h_sent = TRUE WHERE id = $1`, id)
 	return err
 }
 

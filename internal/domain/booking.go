@@ -12,15 +12,17 @@ var (
 )
 
 type Booking struct {
-	ID          string    `json:"id"`
-	UserID      int64     `json:"user_id"`
-	UserName    string    `json:"name"`
-	Phone       string    `json:"phone"`
-	ServiceName string    `json:"service_name"`
-	Comment     string    `json:"comment"`
-	TimeSlot    string    `json:"timeslot"`
-	Date        string    `json:"date"`
-	CreatedAt   time.Time `json:"created_at"`
+	ID              string    `json:"id"`
+	UserID          int64     `json:"user_id"`
+	UserName        string    `json:"name"`
+	Phone           string    `json:"phone"`
+	ServiceName     string    `json:"service_name"`
+	Comment         string    `json:"comment"`
+	TimeSlot        string    `json:"timeslot"`
+	Date            string    `json:"date"`
+	CreatedAt       time.Time `json:"created_at"`
+	Reminder24hSent bool      `json:"reminder_24h_sent"`
+	Reminder1hSent  bool      `json:"reminder_1h_sent"`
 }
 
 type BookingRepository interface {
@@ -34,6 +36,9 @@ type BookingRepository interface {
 	DeleteConfirmed(ctx context.Context, userID int64) error
 	DeleteDraft(ctx context.Context, userID int64) error
 	DeleteBookingByID(ctx context.Context, id int) error
+	GetByID(ctx context.Context, id int) (*Booking, error)
+	MarkReminder24hSent(ctx context.Context, id int) error
+	MarkReminder1hSent(ctx context.Context, id int) error
 	GetAllActive(ctx context.Context) ([]Booking, error)
 	GetTakenTimeSlots(ctx context.Context, date string, serviceName string) ([]string, error)
 	ResetAll(ctx context.Context) error
@@ -50,6 +55,9 @@ type BookingService interface {
 	CancelConfirmedBooking(ctx context.Context, userID int64) error
 	CancelDraftBooking(ctx context.Context, userID int64) error
 	DeleteBookingByID(ctx context.Context, id int) error
+	GetBookingByID(ctx context.Context, id int) (*Booking, error)
+	MarkReminder24hSent(ctx context.Context, id int) error
+	MarkReminder1hSent(ctx context.Context, id int) error
 	GetAllActiveBookings(ctx context.Context) ([]Booking, error)
 	ResetAllBookings(ctx context.Context) error
 }

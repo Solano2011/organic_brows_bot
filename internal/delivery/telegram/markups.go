@@ -136,3 +136,11 @@ func BuildAdminMenu(bookings []domain.Booking) *tele.ReplyMarkup {
 	m.Inline(rows...)
 	return m
 }
+
+func BuildReminderMenu(bookingID string) *tele.ReplyMarkup {
+	m := &tele.ReplyMarkup{}
+	confirm := tele.Btn{Text: "✅ Подтвердить запись", Data: "confirm_remind_" + bookingID}
+	cancel := tele.Btn{Text: "❌ Отменить запись", Data: "cancel_remind_" + bookingID}
+	m.Inline(m.Row(confirm), m.Row(cancel))
+	return m
+}

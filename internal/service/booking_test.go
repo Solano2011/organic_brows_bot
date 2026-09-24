@@ -91,6 +91,18 @@ func (m *mockBookingRepo) DeleteBookingByID(ctx context.Context, id int) error {
 	return nil
 }
 
+func (m *mockBookingRepo) GetByID(ctx context.Context, id int) (*domain.Booking, error) {
+	return nil, domain.ErrBookingNotFound
+}
+
+func (m *mockBookingRepo) MarkReminder24hSent(ctx context.Context, id int) error {
+	return nil
+}
+
+func (m *mockBookingRepo) MarkReminder1hSent(ctx context.Context, id int) error {
+	return nil
+}
+
 func (m *mockBookingRepo) GetAllActive(ctx context.Context) ([]domain.Booking, error) {
 	if m.getAllActiveFunc != nil {
 		return m.getAllActiveFunc(ctx)

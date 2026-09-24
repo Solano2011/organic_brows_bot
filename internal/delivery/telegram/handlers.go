@@ -212,20 +212,9 @@ func (h *Handlers) handleWebApp(c tele.Context) error {
 	}
 
 	// Подтверждаем пользователю
-	text := fmt.Sprintf(
-		"✅ *Запись успешно подтверждена!*\n"+
-			"━━━━━━━━━━━━━━━\n"+
-			"Услуга: `%s`\n"+
-			"Дата: `%s`\n"+
-			"Время: `%s`\n"+
-			"Имя: `%s`\n"+
-			"Телефон: `%s`\n"+
-			"💬 Комментарий: `%s`\n\n"+
-			"Жду вас! 💖",
-		booking.ServiceName, booking.Date, booking.TimeSlot, booking.UserName, booking.Phone, booking.Comment,
-	)
+	text := FormatClientBooking(booking.ServiceName, booking.Date, booking.TimeSlot)
 
-	return c.Send(text, BuildInlineMainMenu(h.webAppBaseURL), tele.ModeMarkdown)
+	return c.Send(text, BuildInlineMainMenu(h.webAppBaseURL), tele.ModeHTML)
 }
 
 // handleMyBookings обрабатывает нажатие на кнопку "📅 Моя бронь"
@@ -245,23 +234,12 @@ func (h *Handlers) handleMyBookings(c tele.Context) error {
 		)
 	}
 
-	text := fmt.Sprintf(
-		"📋 *Ваша активная запись:*\n"+
-			"━━━━━━━━━━━━━━━\n"+
-			"Услуга: `%s`\n"+
-			"Дата: `%s`\n"+
-			"Время: `%s`\n"+
-			"Имя: `%s`\n"+
-			"Телефон: `%s`\n"+
-			"Комментарий: `%s`\n\n"+
-			"Для отмены записи используйте кнопку ниже.",
-		b.ServiceName, b.Date, b.TimeSlot, b.UserName, b.Phone, b.Comment,
-	)
+	text := FormatClientBooking(b.ServiceName, b.Date, b.TimeSlot)
 
 	m := &tele.ReplyMarkup{}
 	m.Inline(m.Row(BtnCancelBooking))
 
-	return c.Send(text, m, tele.ModeMarkdown)
+	return c.Send(text, m, tele.ModeHTML)
 }
 
 func (h *Handlers) handleMyBookingBtn(c tele.Context) error {
@@ -278,18 +256,8 @@ func (h *Handlers) handleMyBookingBtn(c tele.Context) error {
 	m := &tele.ReplyMarkup{}
 	m.Inline(m.Row(BtnCancelBooking), m.Row(BtnBackToMain))
 
-	text := fmt.Sprintf(
-		"📋 *Ваша запись:*\n"+
-			"━━━━━━━━━━━━━━━\n"+
-			"Услуга: `%s`\n"+
-			"Дата: `%s`\n"+
-			"Время: `%s`\n"+
-			"Имя: `%s`\n"+
-			"Телефон: `%s`\n"+
-			"Комментарий: `%s`",
-		b.ServiceName, b.Date, b.TimeSlot, b.UserName, b.Phone, b.Comment,
-	)
-	return c.Send(text, m, tele.ModeMarkdown)
+	text := FormatClientBooking(b.ServiceName, b.Date, b.TimeSlot)
+	return c.Send(text, m, tele.ModeHTML)
 }
 
 func (h *Handlers) handleCancelBooking(c tele.Context) error {
@@ -362,8 +330,13 @@ func (h *Handlers) handleAdminResetAll(c tele.Context) error {
 
 func (h *Handlers) handleCallback(c tele.Context) error {
 	data := c.Data()
-	if strings.HasPrefix(data, "del_book:") {
+	switch {
+	case strings.HasPrefix(data, "del_book:"):
 		return h.handleDeleteBooking(c)
+	case strings.HasPrefix(data, "confirm_remind_"):
+		return h.handleConfirmReminder(c)
+	case strings.HasPrefix(data, "cancel_remind_"):
+		return h.handleCancelReminder(c)
 	}
 	return nil
 }
@@ -389,6 +362,72 @@ func (h *Handlers) handleDeleteBooking(c tele.Context) error {
 	_ = c.Edit(text, tele.ModeHTML)
 	_, _ = h.bot.EditReplyMarkup(c.Callback(), BuildAdminMenu(bookings))
 	return c.Respond(&tele.CallbackResponse{Text: fmt.Sprintf("Запись #%d удалена", id)})
+}
+
+func (h *Handlers) handleConfirmReminder(c tele.Context) error {
+	id, booking, err := h.reminderBooking(c, "confirm_remind_")
+	if err != nil {
+		return err
+	}
+	if _, err := h.bot.EditReplyMarkup(c.Callback(), &tele.ReplyMarkup{}); err != nil {
+		log.Printf("⚠️ Не удалось убрать кнопки напоминания id=%d: %v", id, err)
+	}
+	if h.adminID != 0 {
+		adminText := fmt.Sprintf(
+			"🔔 Клиент подтвердил запись!\nУслуга: %s\nДата: %s\nВремя: %s\nТелефон: %s",
+			html.EscapeString(booking.ServiceName),
+			html.EscapeString(booking.Date),
+			html.EscapeString(booking.TimeSlot),
+			html.EscapeString(booking.Phone),
+		)
+		_, _ = h.bot.Send(tele.ChatID(h.adminID), adminText, tele.ModeHTML)
+	}
+	_ = c.Respond()
+	return c.Send("✅ Спасибо, мы ждем вас!")
+}
+
+func (h *Handlers) handleCancelReminder(c tele.Context) error {
+	id, booking, err := h.reminderBooking(c, "cancel_remind_")
+	if err != nil {
+		return err
+	}
+	if err := h.bookingService.DeleteBookingByID(context.Background(), id); err != nil {
+		log.Printf("❌ Ошибка отмены записи из напоминания id=%d: %v", id, err)
+		return c.Respond(&tele.CallbackResponse{Text: "Не удалось отменить запись", ShowAlert: true})
+	}
+	if _, err := h.bot.EditReplyMarkup(c.Callback(), &tele.ReplyMarkup{}); err != nil {
+		log.Printf("⚠️ Не удалось убрать кнопки напоминания id=%d: %v", id, err)
+	}
+	if h.adminID != 0 {
+		adminText := fmt.Sprintf(
+			"⚠️ Внимание! Клиент ОТМЕНИЛ запись!\nУслуга: %s\nДата: %s\nВремя: %s\nТелефон: %s",
+			html.EscapeString(booking.ServiceName),
+			html.EscapeString(booking.Date),
+			html.EscapeString(booking.TimeSlot),
+			html.EscapeString(booking.Phone),
+		)
+		_, _ = h.bot.Send(tele.ChatID(h.adminID), adminText, tele.ModeHTML)
+	}
+	_ = c.Respond()
+	return c.Send("❌ Ваша запись отменена.")
+}
+
+func (h *Handlers) reminderBooking(c tele.Context, prefix string) (int, *domain.Booking, error) {
+	id, err := strconv.Atoi(strings.TrimPrefix(c.Data(), prefix))
+	if err != nil {
+		_ = c.Respond(&tele.CallbackResponse{Text: "Некорректный ID", ShowAlert: true})
+		return 0, nil, fmt.Errorf("bad id")
+	}
+	booking, err := h.bookingService.GetBookingByID(context.Background(), id)
+	if err != nil {
+		_ = c.Respond(&tele.CallbackResponse{Text: "Запись не найдена", ShowAlert: true})
+		return 0, nil, err
+	}
+	if booking.UserID != c.Sender().ID {
+		_ = c.Respond(&tele.CallbackResponse{Text: "Это не ваша запись", ShowAlert: true})
+		return 0, nil, fmt.Errorf("forbidden")
+	}
+	return id, booking, nil
 }
 
 // --- ОБРАБОТКА ЗАМЕНЫ ЗАПИСИ ---

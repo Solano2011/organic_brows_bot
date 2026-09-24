@@ -131,6 +131,42 @@ func (r *BookingRepo) DeleteDraft(ctx context.Context, userID int64) error {
 	return nil
 }
 
+func (r *BookingRepo) GetByID(ctx context.Context, id int) (*domain.Booking, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, b := range r.drafts {
+		if b.ID == strconv.Itoa(id) {
+			copy := *b
+			return &copy, nil
+		}
+	}
+	return nil, domain.ErrBookingNotFound
+}
+
+func (r *BookingRepo) MarkReminder24hSent(ctx context.Context, id int) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, b := range r.drafts {
+		if b.ID == strconv.Itoa(id) {
+			b.Reminder24hSent = true
+			return nil
+		}
+	}
+	return nil
+}
+
+func (r *BookingRepo) MarkReminder1hSent(ctx context.Context, id int) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, b := range r.drafts {
+		if b.ID == strconv.Itoa(id) {
+			b.Reminder1hSent = true
+			return nil
+		}
+	}
+	return nil
+}
+
 func (r *BookingRepo) DeleteBookingByID(ctx context.Context, id int) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()

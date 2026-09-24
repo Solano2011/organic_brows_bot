@@ -53,6 +53,18 @@ func (s *BookingSvc) DeleteBookingByID(ctx context.Context, id int) error {
 	return s.repo.DeleteBookingByID(ctx, id)
 }
 
+func (s *BookingSvc) GetBookingByID(ctx context.Context, id int) (*domain.Booking, error) {
+	return s.repo.GetByID(ctx, id)
+}
+
+func (s *BookingSvc) MarkReminder24hSent(ctx context.Context, id int) error {
+	return s.repo.MarkReminder24hSent(ctx, id)
+}
+
+func (s *BookingSvc) MarkReminder1hSent(ctx context.Context, id int) error {
+	return s.repo.MarkReminder1hSent(ctx, id)
+}
+
 func (s *BookingSvc) GetAllActiveBookings(ctx context.Context) ([]domain.Booking, error) {
 	return s.repo.GetAllActive(ctx)
 }

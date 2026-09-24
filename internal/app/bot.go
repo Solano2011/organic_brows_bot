@@ -60,6 +60,7 @@ func Run(token string, adminID int64, db *postgres.DB, webAppURL string) {
 	handlers.InitRoutes(b)
 
 	log.Printf("Бот @%s успешно запущен! Admin ID: %d", b.Me.Username, adminID)
+	StartReminderScheduler(b, bookingService)
 
 	// --- ЗАПУСК ВЕБ-СЕРВЕРА ---
 	go func() {
@@ -228,24 +229,9 @@ func Run(token string, adminID int64, db *postgres.DB, webAppURL string) {
 
 			// Отправляем сообщение пользователю
 			user := &tele.User{ID: data.UserID}
-			confirmText := fmt.Sprintf(
-				"✅ *Запись успешно подтверждена!*\n"+
-					"━━━━━━━━━━━━━━━\n"+
-					"Услуга: `%s`\n"+
-					"Дата: `%s`\n"+
-					"Время: `%s`\n"+
-					"Имя: `%s`\n"+
-					"Телефон: `%s`\n",
-				booking.ServiceName, booking.Date, booking.TimeSlot, booking.UserName, booking.Phone,
-			)
+			confirmText := telegram.FormatClientBooking(booking.ServiceName, booking.Date, booking.TimeSlot)
 
-			if booking.Comment != "" {
-				confirmText += fmt.Sprintf("💬 Комментарий: `%s`\n", booking.Comment)
-			}
-
-			confirmText += "\nСтатус: *Подтверждено*\n\nЖдем вас!"
-
-			_, err = b.Send(user, confirmText, telegram.BuildInlineMainMenu(webAppURL), tele.ModeMarkdown)
+			_, err = b.Send(user, confirmText, telegram.BuildInlineMainMenu(webAppURL), tele.ModeHTML)
 			if err != nil {
 				log.Printf("⚠️ Ошибка при отправке сообщения: %v", err)
 			}
