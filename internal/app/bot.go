@@ -386,7 +386,7 @@ func Run(token string, adminIDs []int64, db *postgres.DB, webAppURL string) {
 					return
 				}
 				switch payload.SlotStepMinutes {
-				case 15, 30, 60, 90, 120:
+				case 15, 30, 60, 75, 90, 120:
 				default:
 					http.Error(w, "invalid slot step", http.StatusBadRequest)
 					return

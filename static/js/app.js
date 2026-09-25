@@ -117,7 +117,7 @@ function generateDateButtons() {
     const today = new Date();
     const days = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
     const months = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 30; i++) {
         const date = new Date(today);
         date.setDate(today.getDate() + i);
         const dayName = i === 0 ? 'Сегодня' : days[date.getDay()];
