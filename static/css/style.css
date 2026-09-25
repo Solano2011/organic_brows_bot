@@ -172,6 +172,10 @@ body {
     flex-shrink: 0;
 }
 
+div.service-image {
+    background-color: transparent;
+}
+
 .service-info {
     display: flex;
     flex-direction: column;
