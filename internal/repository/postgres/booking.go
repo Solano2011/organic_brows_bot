@@ -190,13 +190,13 @@ func (r *BookingRepo) GetDraftByUserID(ctx context.Context, userID int64) (*doma
 }
 
 func (r *BookingRepo) Delete(ctx context.Context, userID int64) error {
-	_, err := r.db.Conn.Exec(ctx, `DELETE FROM bookings WHERE user_id = $1`, userID)
+	_, err := r.db.Conn.Exec(ctx, `UPDATE bookings SET status = 'cancelled' WHERE user_id = $1 AND status = 'confirmed'`, userID)
 	return err
 }
 
 func (r *BookingRepo) DeleteConfirmed(ctx context.Context, userID int64) error {
 	log.Printf("🗑️ Попытка удалить подтвержденные брони для userID=%d", userID)
-	cmdTag, err := r.db.Conn.Exec(ctx, `DELETE FROM bookings WHERE user_id = $1 AND status = 'confirmed'`, userID)
+	cmdTag, err := r.db.Conn.Exec(ctx, `UPDATE bookings SET status = 'cancelled' WHERE user_id = $1 AND status = 'confirmed'`, userID)
 	if err != nil {
 		log.Printf("❌ Ошибка при удалении подтвержденных броней для userID=%d: %v", userID, err)
 		return err
