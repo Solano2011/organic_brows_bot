@@ -69,6 +69,10 @@ func (s *BookingSvc) GetAllActiveBookings(ctx context.Context) ([]domain.Booking
 	return s.repo.GetAllActive(ctx)
 }
 
+func (s *BookingSvc) ListClients(ctx context.Context) ([]domain.ClientVisit, error) {
+	return s.repo.ListClients(ctx)
+}
+
 func (s *BookingSvc) ResetAllBookings(ctx context.Context) error {
 	return s.repo.ResetAll(ctx)
 }

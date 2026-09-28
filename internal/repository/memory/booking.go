@@ -193,6 +193,34 @@ func (r *BookingRepo) GetAllActive(ctx context.Context) ([]domain.Booking, error
 	return active, nil
 }
 
+func (r *BookingRepo) ListClients(ctx context.Context) ([]domain.ClientVisit, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	seen := map[int64]domain.ClientVisit{}
+	for _, b := range r.drafts {
+		if b.TimeSlot == "" {
+			continue
+		}
+		current, ok := seen[b.UserID]
+		visit := domain.ClientVisit{
+			UserID:      b.UserID,
+			UserName:    b.UserName,
+			Phone:       b.Phone,
+			Date:        b.Date,
+			ServiceName: b.ServiceName,
+		}
+		if !ok || b.Date+" "+b.TimeSlot > current.Date {
+			seen[b.UserID] = visit
+		}
+	}
+	result := make([]domain.ClientVisit, 0, len(seen))
+	for _, item := range seen {
+		result = append(result, item)
+	}
+	return result, nil
+}
+
 func (r *BookingRepo) ResetAll(ctx context.Context) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()

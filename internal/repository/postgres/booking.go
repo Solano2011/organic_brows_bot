@@ -221,7 +221,8 @@ func (r *BookingRepo) GetAllActive(ctx context.Context) ([]domain.Booking, error
                COALESCE(reminder_24h_sent, FALSE), COALESCE(reminder_1h_sent, FALSE)
         FROM bookings
         WHERE status = 'confirmed'
-        ORDER BY created_at DESC`,
+          AND (date + time_slot::time) > (NOW() AT TIME ZONE 'Europe/Samara') - INTERVAL '1 hour'
+        ORDER BY date, time_slot`,
 	)
 	if err != nil {
 		return nil, err
@@ -241,6 +242,39 @@ func (r *BookingRepo) GetAllActive(ctx context.Context) ([]domain.Booking, error
 		result = append(result, b)
 	}
 	return result, nil
+}
+
+func (r *BookingRepo) ListClients(ctx context.Context) ([]domain.ClientVisit, error) {
+	rows, err := r.db.Conn.Query(ctx, `
+		SELECT user_id, user_name, phone, visit_date, service_name
+		FROM (
+			SELECT DISTINCT ON (user_id)
+				user_id,
+				COALESCE(user_name, ''),
+				COALESCE(phone, ''),
+				to_char(date, 'DD.MM.YYYY') AS visit_date,
+				service_name,
+				date,
+				time_slot
+			FROM bookings
+			WHERE status = 'confirmed'
+			ORDER BY user_id, date DESC, time_slot DESC
+		) clients
+		ORDER BY date DESC, time_slot DESC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []domain.ClientVisit
+	for rows.Next() {
+		var item domain.ClientVisit
+		if err := rows.Scan(&item.UserID, &item.UserName, &item.Phone, &item.Date, &item.ServiceName); err != nil {
+			return nil, err
+		}
+		result = append(result, item)
+	}
+	return result, rows.Err()
 }
 
 func (r *BookingRepo) DeleteBookingByID(ctx context.Context, id int) error {

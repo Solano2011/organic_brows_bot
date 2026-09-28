@@ -63,6 +63,7 @@ func (h *Handlers) InitRoutes(b *tele.Bot) {
 
 	b.Handle(&BtnAdminRefresh, h.handleAdminRefresh)
 	b.Handle(&BtnAdminResetAll, h.handleAdminResetAll)
+	b.Handle(&BtnAdminClients, h.handleAdminClients)
 	b.Handle(tele.OnCallback, h.handleCallback)
 }
 
@@ -378,6 +379,48 @@ func (h *Handlers) handleAdminRefresh(c tele.Context) error {
 	text, bookings, _ := h.renderAdminDashboard(context.Background())
 	_ = c.Delete()
 	return c.Send(text, BuildAdminMenu(bookings, h.scheduleURL()), tele.ModeHTML)
+}
+
+func (h *Handlers) handleAdminClients(c tele.Context) error {
+	if !h.isAdmin(c.Sender().ID) {
+		return c.Respond(&tele.CallbackResponse{Text: "Доступ запрещен", ShowAlert: true})
+	}
+	if err := c.Respond(); err != nil {
+		return err
+	}
+	clients, err := h.bookingService.ListClients(context.Background())
+	if err != nil {
+		log.Printf("❌ Ошибка загрузки базы клиентов: %v", err)
+		return c.Send("Не удалось загрузить базу клиентов.")
+	}
+	if len(clients) == 0 {
+		return c.Send("База клиентов пуста.")
+	}
+	for _, part := range clientMessages(clients) {
+		if err := c.Send(part); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func clientMessages(clients []domain.ClientVisit) []string {
+	const limit = 4000
+	var parts []string
+	var sb strings.Builder
+	for _, client := range clients {
+		block := fmt.Sprintf("👤 %s | 📞 %s\n🕒 Был(а): %s | %s\n---------------------\n",
+			client.UserName, client.Phone, client.Date, client.ServiceName)
+		if sb.Len() > 0 && sb.Len()+len(block) > limit {
+			parts = append(parts, sb.String())
+			sb.Reset()
+		}
+		sb.WriteString(block)
+	}
+	if sb.Len() > 0 {
+		parts = append(parts, sb.String())
+	}
+	return parts
 }
 
 func (h *Handlers) handleAdminResetAll(c tele.Context) error {

@@ -11,6 +11,14 @@ var (
 	ErrTimeSlotTaken   = errors.New("это время уже занято")
 )
 
+type ClientVisit struct {
+	UserID      int64
+	UserName    string
+	Phone       string
+	Date        string
+	ServiceName string
+}
+
 type Booking struct {
 	ID              string    `json:"id"`
 	UserID          int64     `json:"user_id"`
@@ -40,6 +48,7 @@ type BookingRepository interface {
 	MarkReminder24hSent(ctx context.Context, id int) error
 	MarkReminder1hSent(ctx context.Context, id int) error
 	GetAllActive(ctx context.Context) ([]Booking, error)
+	ListClients(ctx context.Context) ([]ClientVisit, error)
 	GetTakenTimeSlots(ctx context.Context, date string, serviceName string) ([]string, error)
 	ResetAll(ctx context.Context) error
 }
@@ -59,5 +68,6 @@ type BookingService interface {
 	MarkReminder24hSent(ctx context.Context, id int) error
 	MarkReminder1hSent(ctx context.Context, id int) error
 	GetAllActiveBookings(ctx context.Context) ([]Booking, error)
+	ListClients(ctx context.Context) ([]ClientVisit, error)
 	ResetAllBookings(ctx context.Context) error
 }

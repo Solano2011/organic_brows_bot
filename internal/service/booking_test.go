@@ -103,6 +103,10 @@ func (m *mockBookingRepo) MarkReminder1hSent(ctx context.Context, id int) error 
 	return nil
 }
 
+func (m *mockBookingRepo) ListClients(ctx context.Context) ([]domain.ClientVisit, error) {
+	return nil, nil
+}
+
 func (m *mockBookingRepo) GetAllActive(ctx context.Context) ([]domain.Booking, error) {
 	if m.getAllActiveFunc != nil {
 		return m.getAllActiveFunc(ctx)

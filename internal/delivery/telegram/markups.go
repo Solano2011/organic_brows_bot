@@ -31,6 +31,7 @@ var (
 	// Админка
 	BtnAdminRefresh  = Menu.Data("🔄 Обновить сводку", "admin_refresh")
 	BtnAdminResetAll = Menu.Data("🗑 Сбросить все записи", "admin_reset_all")
+	BtnAdminClients  = Menu.Data("👥 База клиентов", "admin_clients")
 )
 
 // BuildInlineMainMenu создаёт Inline-клавиатуру главного меню с WebApp кнопкой
@@ -147,7 +148,7 @@ func BuildAdminMenu(bookings []domain.Booking, scheduleURL string) *tele.ReplyMa
 	if scheduleURL != "" {
 		rows = append(rows, m.Row(m.WebApp("⚙️ Настроить график", &tele.WebApp{URL: scheduleURL})))
 	}
-	rows = append(rows, m.Row(BtnAdminRefresh), m.Row(BtnAdminResetAll))
+	rows = append(rows, m.Row(BtnAdminRefresh), m.Row(BtnAdminResetAll), m.Row(BtnAdminClients))
 	m.Inline(rows...)
 	return m
 }
