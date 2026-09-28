@@ -250,9 +250,9 @@ func (r *BookingRepo) ListClients(ctx context.Context) ([]domain.ClientVisit, er
 		FROM (
 			SELECT DISTINCT ON (user_id)
 				user_id,
-				COALESCE(user_name, ''),
-				COALESCE(phone, ''),
-				to_char(date, 'DD.MM.YYYY') AS visit_date,
+				COALESCE(user_name, '') AS user_name,
+				COALESCE(phone, '') AS phone,
+				date AS visit_date,
 				service_name,
 				date,
 				time_slot
@@ -269,9 +269,11 @@ func (r *BookingRepo) ListClients(ctx context.Context) ([]domain.ClientVisit, er
 	var result []domain.ClientVisit
 	for rows.Next() {
 		var item domain.ClientVisit
-		if err := rows.Scan(&item.UserID, &item.UserName, &item.Phone, &item.Date, &item.ServiceName); err != nil {
+		var visitDate time.Time
+		if err := rows.Scan(&item.UserID, &item.UserName, &item.Phone, &visitDate, &item.ServiceName); err != nil {
 			return nil, err
 		}
+		item.Date = visitDate.Format("02.01.2006")
 		result = append(result, item)
 	}
 	return result, rows.Err()
