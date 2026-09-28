@@ -36,6 +36,10 @@ func NewPostgresDB(connString string) (*DB, error) {
 	if _, err := conn.Exec(context.Background(), `
 		ALTER TABLE bookings ADD COLUMN IF NOT EXISTS reminder_24h_sent BOOLEAN DEFAULT FALSE;
 		ALTER TABLE bookings ADD COLUMN IF NOT EXISTS reminder_1h_sent BOOLEAN DEFAULT FALSE;
+		ALTER TABLE bookings ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'confirmed';
+		UPDATE bookings SET status = 'confirmed' WHERE status IS NULL;
+		ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_status_check;
+		ALTER TABLE bookings ADD CONSTRAINT bookings_status_check CHECK (status IN ('draft', 'confirmed', 'cancelled'));
 		CREATE TABLE IF NOT EXISTS work_schedule (
 			date DATE PRIMARY KEY,
 			is_working_day BOOLEAN NOT NULL DEFAULT TRUE,
