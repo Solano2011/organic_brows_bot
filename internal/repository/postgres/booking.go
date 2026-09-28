@@ -257,7 +257,7 @@ func (r *BookingRepo) ListClients(ctx context.Context) ([]domain.ClientVisit, er
 				date,
 				time_slot
 			FROM bookings
-			WHERE status = 'confirmed'
+			WHERE status IN ('confirmed', 'cancelled')
 			ORDER BY user_id, date DESC, time_slot DESC
 		) clients
 		ORDER BY date DESC, time_slot DESC`)
@@ -280,7 +280,7 @@ func (r *BookingRepo) ListClients(ctx context.Context) ([]domain.ClientVisit, er
 }
 
 func (r *BookingRepo) DeleteBookingByID(ctx context.Context, id int) error {
-	_, err := r.db.Conn.Exec(ctx, `DELETE FROM bookings WHERE id = $1`, id)
+	_, err := r.db.Conn.Exec(ctx, `UPDATE bookings SET status = 'cancelled' WHERE id = $1`, id)
 	return err
 }
 
@@ -315,7 +315,7 @@ func (r *BookingRepo) MarkReminder1hSent(ctx context.Context, id int) error {
 }
 
 func (r *BookingRepo) ResetAll(ctx context.Context) error {
-	_, err := r.db.Conn.Exec(ctx, `TRUNCATE TABLE bookings`)
+	_, err := r.db.Conn.Exec(ctx, `UPDATE bookings SET status = 'cancelled' WHERE status = 'confirmed'`)
 	return err
 }
 
